@@ -81,7 +81,13 @@ def grep_full_py_identifiers(tokens):
 		yield token
 
 
+def output_limit():
+	return 300
+	
 def output(s):
+	limit = output_limit()
+	if len(s) > limit:
+		s = s[:limit - 3] + "..."
 	sys.stderr.write(s)
 	sys.stderr.write("\n")
 	sys.stderr.flush()
