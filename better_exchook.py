@@ -81,9 +81,16 @@ def grep_full_py_identifiers(tokens):
 		yield token
 
 
+def output(s):
+	sys.stderr.write(s)
+	sys.stderr.flush()
+	
+def output_line(s):
+	output(s + "\n")
+	
 def better_exchook(etype, value, tb):
-	print >>sys.stderr, "EXCEPTION"
-	print >>sys.stderr, 'Traceback (most recent call last):'
+	output_line("EXCEPTION")
+	output_line('Traceback (most recent call last):')
 	topFrameLocals,topFrameGlobals = None,None
 	try:
 		import linecache
@@ -108,35 +115,35 @@ def better_exchook(etype, value, tb):
 			co = f.f_code
 			filename = co.co_filename
 			name = co.co_name
-			print >>sys.stderr, '  File "%s", line %d, in %s' % (filename,lineno,name)
+			output_line('  File "%s", line %d, in %s' % (filename,lineno,name))
 			linecache.checkcache(filename)
 			line = linecache.getline(filename, lineno, f.f_globals)
 			if line:
 				line = line.strip()
-				print >>sys.stderr, '    line:', line
-				print >>sys.stderr, '    locals:'
+				output_line('    line: ' + line)
+				output_line('    locals:')
 				alreadyPrintedLocals = set()
 				for tokenstr in grep_full_py_identifiers(parse_py_statement(line)):
 					splittedtoken = tuple(tokenstr.split("."))
 					for token in map(lambda i: splittedtoken[0:i], range(1, len(splittedtoken) + 1)):
 						if token in alreadyPrintedLocals: continue
-						print >>sys.stderr, '     ', ".".join(token), "=",
+						output('      ' + ".".join(token) + " =")
 						tokenvalue = None
 						tokenvalue = _trySet(tokenvalue, lambda: "<local> " + repr(_resolveIdentifier(f.f_locals, token)))
 						tokenvalue = _trySet(tokenvalue, lambda: "<global> " + repr(_resolveIdentifier(f.f_globals, token)))
 						tokenvalue = _trySet(tokenvalue, lambda: "<builtin> " + repr(_resolveIdentifier(f.f_builtins, token)))
 						tokenvalue = tokenvalue or "<not found>"
-						print >>sys.stderr, tokenvalue
+						output_line(tokenvalue)
 						alreadyPrintedLocals.add(token)
-				if len(alreadyPrintedLocals) == 0: print "       no locals"
+				if len(alreadyPrintedLocals) == 0: output_line("       no locals")
 			_tb = _tb.tb_next
 			n += 1
 
 	except Exception, e:
-		print >>sys.stderr, "ERROR: cannot get more detailed exception info because:"
+		output_line("ERROR: cannot get more detailed exception info because:")
 		import traceback
-		for l in traceback.format_exc().split("\n"): print >>sys.stderr, "  ", l
-		print >>sys.stderr, "simple traceback:"
+		for l in traceback.format_exc().split("\n"): output_line("   " + l)
+		output_line("simple traceback:")
 		traceback.print_tb(tb)
 
 	import types
@@ -153,9 +160,9 @@ def better_exchook(etype, value, tb):
 	if (isinstance(etype, BaseException) or
 		isinstance(etype, types.InstanceType) or
 		etype is None or type(etype) is str):
-		print >>sys.stderr, _format_final_exc_line(etype, value)
+		output_line(_format_final_exc_line(etype, value))
 	else:
-		print >>sys.stderr, _format_final_exc_line(etype.__name__, value)
+		output_line(_format_final_exc_line(etype.__name__, value))
 
 	debug = False
 	try:
