@@ -168,6 +168,9 @@ def better_exchook(etype, value, tb):
 		#ipshell()
 		ipshell.mainloop()
 
+def install():
+	sys.excepthook = better_exchook
+	
 if __name__ == "__main__":
 	# some examples
 	# this code produces this output: https://gist.github.com/922622
