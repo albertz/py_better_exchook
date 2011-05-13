@@ -173,6 +173,7 @@ def better_exchook(etype, value, tb):
 		debug = int(os.environ["DEBUG"]) != 0
 	except: pass
 	if debug:
+		output("---------- DEBUG SHELL -----------")
 		from IPython.Shell import IPShellEmbed,IPShell
 		ipshell = IPShell(argv=[], user_ns=topFrameLocals, user_global_ns=topFrameGlobals)
 		#ipshell()
