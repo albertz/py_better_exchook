@@ -92,6 +92,13 @@ def output(s):
 	sys.stderr.write("\n")
 	sys.stderr.flush()
 
+def debug_shell(user_ns, user_global_ns):
+	from IPython.Shell import IPShellEmbed,IPShell
+	ipshell = IPShell(argv=[], user_ns=user_ns, user_global_ns=user_global_ns)
+	#ipshell()
+	ipshell.mainloop()
+	
+
 def better_exchook(etype, value, tb):
 	output("EXCEPTION")
 	output('Traceback (most recent call last):')
@@ -174,11 +181,8 @@ def better_exchook(etype, value, tb):
 	except: pass
 	if debug:
 		output("---------- DEBUG SHELL -----------")
-		from IPython.Shell import IPShellEmbed,IPShell
-		ipshell = IPShell(argv=[], user_ns=topFrameLocals, user_global_ns=topFrameGlobals)
-		#ipshell()
-		ipshell.mainloop()
-
+		debug_shell(user_ns=topFrameLocals, user_global_ns=topFrameGlobals)
+		
 def install():
 	sys.excepthook = better_exchook
 	
