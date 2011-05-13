@@ -174,7 +174,7 @@ def better_exchook(etype, value, tb):
 	except: pass
 	if debug:
 		from IPython.Shell import IPShellEmbed,IPShell
-		ipshell = IPShell(user_ns=topFrameLocals, user_global_ns=topFrameGlobals)
+		ipshell = IPShell(argv=[], user_ns=topFrameLocals, user_global_ns=topFrameGlobals)
 		#ipshell()
 		ipshell.mainloop()
 
