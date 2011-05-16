@@ -8,6 +8,8 @@
 # (no matter if local, global or builtin) of the code line of each stack frame.
 # See below for some examples and some example output.
 
+# https://github.com/albertz/py_better_exchook
+
 import sys
 
 def parse_py_statement(line):
