@@ -67,7 +67,11 @@ def parse_py_statement(line):
 	elif state == 6: yield ("comment", curtoken)
 
 
-pykeywords = set(["for","in","while","print","continue","break","if","else","elif","yield","def","class","try","except","import","pass","lambda"])
+pykeywords = set([
+	"for","in","while","print","continue","break",
+	"if","else","elif","yield","return","def","class",
+	"try","except","import","pass","lambda",
+	])
 
 def grep_full_py_identifiers(tokens):
 	global pykeywords
