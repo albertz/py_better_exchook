@@ -10,7 +10,7 @@
 
 # https://github.com/albertz/py_better_exchook
 
-import sys
+import sys, os, os.path
 
 def parse_py_statement(line):
 	state = 0
@@ -122,6 +122,13 @@ def pretty_print(obj):
 	if extra_info != "": s += ", " + extra_info
 	return s
 
+def fallback_findfile(filename):
+	mods = [ m for m in sys.modules.values() if m and hasattr(m, "__file__") and filename in m.__file__ ]
+	if len(mods) == 0: return None
+	altfn = mods[0].__file__
+	if altfn[-4:-1] == ".py": altfn = altfn[:-1] # *.pyc or whatever
+	return altfn
+
 def better_exchook(etype, value, tb):
 	output("EXCEPTION")
 	output('Traceback (most recent call last):')
@@ -150,6 +157,11 @@ def better_exchook(etype, value, tb):
 			filename = co.co_filename
 			name = co.co_name
 			output('  File "%s", line %d, in %s' % (filename,lineno,name))
+			if not os.path.isfile(filename):
+				altfn = fallback_findfile(filename)
+				if altfn:
+					output("    -- couldn't find file, trying this instead: " + altfn)
+					filename = altfn
 			linecache.checkcache(filename)
 			line = linecache.getline(filename, lineno, f.f_globals)
 			if line:
@@ -200,9 +212,7 @@ def better_exchook(etype, value, tb):
 		output(_format_final_exc_line(etype.__name__, value))
 
 	debug = False
-	try:
-		import os
-		debug = int(os.environ["DEBUG"]) != 0
+	try: debug = int(os.environ["DEBUG"]) != 0
 	except: pass
 	if debug:
 		output("---------- DEBUG SHELL -----------")
