@@ -82,24 +82,38 @@ def grep_full_py_identifiers(tokens):
 		if token[0] in ".0123456789": continue
 		yield token
 
-
-def output_limit():
-	return 300
 	
-def output(s):
-	limit = output_limit()
-	if len(s) > limit:
-		s = s[:limit - 3] + "..."
-	sys.stderr.write(s)
-	sys.stderr.write("\n")
-	sys.stderr.flush()
-
 def debug_shell(user_ns, user_global_ns):
 	from IPython.Shell import IPShellEmbed,IPShell
 	ipshell = IPShell(argv=[], user_ns=user_ns, user_global_ns=user_global_ns)
 	#ipshell()
 	ipshell.mainloop()
+
+def output(s): print s
+
+def output_limit():
+	return 300
+
+def pp_extra_info(obj):
+	s = []
+	if hasattr(obj, "__len__"):
+		try: s += ["len = " + str(obj.__len__())]
+		except: pass
+	if hasattr(obj, "__getitem__"):
+		try:
+			subobj = obj.__getitem__(0)
+			s += ["_[0]: {" + pp_extra_info(subobj) + "}"]
+		except: pass
+	return ", ".join(s)
 	
+def pretty_print(obj):
+	s = repr(obj)
+	limit = output_limit()
+	if len(s) > limit:
+		s = s[:limit - 3] + "..."
+	extra_info = pp_extra_info(obj)
+	if extra_info != "": s += ", " + extra_info
+	return s
 
 def better_exchook(etype, value, tb):
 	output("EXCEPTION")
@@ -141,9 +155,9 @@ def better_exchook(etype, value, tb):
 					for token in map(lambda i: splittedtoken[0:i], range(1, len(splittedtoken) + 1)):
 						if token in alreadyPrintedLocals: continue
 						tokenvalue = None
-						tokenvalue = _trySet(tokenvalue, lambda: "<local> " + repr(_resolveIdentifier(f.f_locals, token)))
-						tokenvalue = _trySet(tokenvalue, lambda: "<global> " + repr(_resolveIdentifier(f.f_globals, token)))
-						tokenvalue = _trySet(tokenvalue, lambda: "<builtin> " + repr(_resolveIdentifier(f.f_builtins, token)))
+						tokenvalue = _trySet(tokenvalue, lambda: "<local> " + pretty_print(_resolveIdentifier(f.f_locals, token)))
+						tokenvalue = _trySet(tokenvalue, lambda: "<global> " + pretty_print(_resolveIdentifier(f.f_globals, token)))
+						tokenvalue = _trySet(tokenvalue, lambda: "<builtin> " + pretty_print(_resolveIdentifier(f.f_builtins, token)))
 						tokenvalue = tokenvalue or "<not found>"
 						output('      ' + ".".join(token) + " = " + tokenvalue)
 						alreadyPrintedLocals.add(token)
