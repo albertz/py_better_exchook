@@ -169,6 +169,8 @@ def better_exchook(etype, value, tb):
 						output('      ' + ".".join(token) + " = " + tokenvalue)
 						alreadyPrintedLocals.add(token)
 				if len(alreadyPrintedLocals) == 0: output("       no locals")
+			else:
+				output('    -- code not available --')
 			_tb = _tb.tb_next
 			n += 1
 
