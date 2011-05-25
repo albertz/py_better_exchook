@@ -116,7 +116,9 @@ def pp_extra_info(obj, depthlimit = 3):
 				pass # doesn't make sense to get subitems here
 			else:
 				subobj = obj.__getitem__(0)
-				s += ["_[0]: {" + pp_extra_info(subobj, depthlimit - 1) + "}"]
+				extra_info = pp_extra_info(subobj, depthlimit - 1)
+				if extra_info != "":
+					s += ["_[0]: {" + extra_info + "}"]
 		except: pass
 	return ", ".join(s)
 	
