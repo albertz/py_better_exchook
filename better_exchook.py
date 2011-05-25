@@ -101,15 +101,15 @@ def output(s): print s
 def output_limit():
 	return 300
 
-def pp_extra_info(obj):
+def pp_extra_info(obj, depthlimit = 3):
 	s = []
 	if hasattr(obj, "__len__"):
 		try: s += ["len = " + str(obj.__len__())]
 		except: pass
-	if hasattr(obj, "__getitem__"):
+	if depthlimit > 0 and hasattr(obj, "__getitem__"):
 		try:
 			subobj = obj.__getitem__(0)
-			s += ["_[0]: {" + pp_extra_info(subobj) + "}"]
+			s += ["_[0]: {" + pp_extra_info(subobj, depthlimit - 1) + "}"]
 		except: pass
 	return ", ".join(s)
 	
