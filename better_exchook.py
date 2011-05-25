@@ -105,7 +105,7 @@ def pp_extra_info(obj, depthlimit = 3):
 	s = []
 	if hasattr(obj, "__len__"):
 		try:
-			if type(obj) in [str,list,tuple] and len(obj) <= 5:
+			if type(obj) in [str,list,tuple,dict] and len(obj) <= 5:
 				pass # don't print len in this case
 			else:
 				s += ["len = " + str(obj.__len__())]
