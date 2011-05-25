@@ -112,8 +112,11 @@ def pp_extra_info(obj, depthlimit = 3):
 		except: pass
 	if depthlimit > 0 and hasattr(obj, "__getitem__"):
 		try:
-			subobj = obj.__getitem__(0)
-			s += ["_[0]: {" + pp_extra_info(subobj, depthlimit - 1) + "}"]
+			if type(obj) in [str]:
+				pass # doesn't make sense to get subitems here
+			else:
+				subobj = obj.__getitem__(0)
+				s += ["_[0]: {" + pp_extra_info(subobj, depthlimit - 1) + "}"]
 		except: pass
 	return ", ".join(s)
 	
