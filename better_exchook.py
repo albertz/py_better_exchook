@@ -155,10 +155,12 @@ def better_exchook(etype, value, tb):
 			for part in id[1:]:
 				obj = getattr(obj, part)
 			return obj
-		def _trySet(old, func):
+		def _trySet(old, prefix, func):
 			if old is not None: return old
-			try: return func()
-			except: return old
+			try: return prefix + func()
+			except KeyError: return old
+			except Exception, e:
+				return prefix + "!" + e.__class__.__name__ + ": " + str(e)
 		while _tb is not None and (limit is None or n < limit):
 			f = _tb.tb_frame
 			topFrameLocals,topFrameGlobals = f.f_locals,f.f_globals
@@ -184,9 +186,9 @@ def better_exchook(etype, value, tb):
 					for token in map(lambda i: splittedtoken[0:i], range(1, len(splittedtoken) + 1)):
 						if token in alreadyPrintedLocals: continue
 						tokenvalue = None
-						tokenvalue = _trySet(tokenvalue, lambda: "<local> " + pretty_print(_resolveIdentifier(f.f_locals, token)))
-						tokenvalue = _trySet(tokenvalue, lambda: "<global> " + pretty_print(_resolveIdentifier(f.f_globals, token)))
-						tokenvalue = _trySet(tokenvalue, lambda: "<builtin> " + pretty_print(_resolveIdentifier(f.f_builtins, token)))
+						tokenvalue = _trySet(tokenvalue, "<local> ", lambda: pretty_print(_resolveIdentifier(f.f_locals, token)))
+						tokenvalue = _trySet(tokenvalue, "<global> ", lambda: pretty_print(_resolveIdentifier(f.f_globals, token)))
+						tokenvalue = _trySet(tokenvalue, "<builtin> ", lambda: pretty_print(_resolveIdentifier(f.f_builtins, token)))
 						tokenvalue = tokenvalue or "<not found>"
 						output('      ' + ".".join(token) + " = " + tokenvalue)
 						alreadyPrintedLocals.add(token)
