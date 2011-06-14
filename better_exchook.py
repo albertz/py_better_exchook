@@ -111,7 +111,7 @@ def simple_debug_shell(globals, locals):
 		else:
 			set_linecache(COMPILE_STRING_FN, s)
 			try:
-				ret = eval(c, globals=user_global_ns, locals=user_ns)
+				ret = eval(c, globals=globals, locals=locals)
 			except:
 				print "Error executing", repr(s)
 				better_exchook(*sys.exc_info(), autodebugshell=False)
