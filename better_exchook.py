@@ -90,10 +90,14 @@ def grep_full_py_identifiers(tokens):
 		if token[0] in ".0123456789": continue
 		yield token
 
+def set_linecache(filename, source):
+	import linecache
+	linecache.cache[filename] = None, None, [line+'\n' for line in source.splitlines()], filename
 
 def simple_debug_shell(globals, locals):
 	try: import readline
 	except: pass # ignore
+	COMPILE_STRING_FN = "<simple_debug_shell input>"
 	while True:
 		try:
 			s = raw_input("> ")
@@ -101,10 +105,11 @@ def simple_debug_shell(globals, locals):
 			print "breaked debug shell:", sys.exc_info()[0].__name__
 			break
 		try:
-			c = compile(s, "<string>", "single")
+			c = compile(s, COMPILE_STRING_FN, "single")
 		except Exception, e:
 			print e.__class__.__name__, ":", str(e), "in", repr(s)
 		else:
+			set_linecache(COMPILE_STRING_FN, s)
 			try:
 				ret = eval(c, globals=user_global_ns, locals=user_ns)
 			except:
