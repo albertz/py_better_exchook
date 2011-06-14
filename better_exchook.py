@@ -68,7 +68,7 @@ def parse_py_statement(line):
 
 
 pykeywords = set([
-	"for","in","while","print","continue","break",
+	"for","in","while","print","continue","break","del",
 	"if","else","elif","yield","return","def","class",
 	"raise","try","except","import","as","pass","lambda",
 	"assert","and","or","not","is",
