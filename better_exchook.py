@@ -90,7 +90,33 @@ def grep_full_py_identifiers(tokens):
 		if token[0] in ".0123456789": continue
 		yield token
 
-	
+
+def simple_debug_shell(globals, locals):
+	try: import readline
+	except: pass # ignore
+	while True:
+		try:
+			s = raw_input("> ")
+		except:
+			print "breaked debug shell:", sys.exc_info()[0].__name__
+			break
+		try:
+			c = compile(s, "<string>", "single")
+		except Exception, e:
+			print e.__class__.__name__, ":", str(e), "in", repr(s)
+		else:
+			try:
+				ret = eval(c, globals=user_global_ns, locals=user_ns)
+			except:
+				print "Error executing", repr(s)
+				better_exchook(*sys.exc_info(), autodebugshell=False)
+			else:
+				try:
+					if ret is not None: print ret
+				except:
+					print "Error printing return value of", repr(s)
+					better_exchook(*sys.exc_info(), autodebugshell=False)
+		
 def debug_shell(user_ns, user_global_ns):
 	ipshell = None
 	try:
@@ -101,31 +127,7 @@ def debug_shell(user_ns, user_global_ns):
 		#ipshell()
 		ipshell.mainloop()
 	else:
-		try: import readline
-		except: pass # ignore
-		while True:
-			try:
-				s = raw_input("> ")
-			except:
-				print "breaked debug shell:", sys.exc_info()[0].__name__
-				break
-			try:
-				c = compile(s, "<string>", "single")
-			except Exception, e:
-				print e.__class__.__name__, ":", str(e), "in", repr(s)
-			else:
-				try:
-					ret = eval(c, globals=user_global_ns, locals=user_ns)
-				except:
-					print "Error executing", repr(s)
-					better_exchook(*sys.exc_info(), autodebugshell=False)
-				else:
-					try:
-						if ret is not None: print ret
-					except:
-						print "Error printing return value of", repr(s)
-						better_exchook(*sys.exc_info(), autodebugshell=False)
-						
+		simple_debug_shell(user_global_ns, user_ns)						
 
 def output(s): print s
 
