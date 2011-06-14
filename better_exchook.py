@@ -16,7 +16,7 @@ def parse_py_statement(line):
 	state = 0
 	curtoken = ""
 	spaces = " \t\n"
-	ops = ".,;:+-*/%&=(){}[]^<>"
+	ops = ".,;:+-*/%&=|(){}[]^<>"
 	i = 0
 	def _escape_char(c):
 		if c == "n": return "\n"
