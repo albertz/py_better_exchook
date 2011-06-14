@@ -71,7 +71,7 @@ pykeywords = set([
 	"for","in","while","print","continue","break",
 	"if","else","elif","yield","return","def","class",
 	"raise","try","except","import","as","pass","lambda",
-	"assert","and","or","not",
+	"assert","and","or","not","is",
 	])
 
 def grep_full_py_identifiers(tokens):
