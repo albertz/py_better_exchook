@@ -90,9 +90,6 @@ def set_linecache(filename, source):
 	import linecache
 	linecache.cache[filename] = None, None, [line+'\n' for line in source.splitlines()], filename
 
-if "raw_input" not in globals():
-	raw_input = input
-
 def simple_debug_shell(globals, locals):
 	try: import readline
 	except: pass # ignore
