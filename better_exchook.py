@@ -109,6 +109,9 @@ def simple_debug_shell(globals, locals):
 			set_linecache(COMPILE_STRING_FN, s)
 			try:
 				ret = eval(c, globals, locals)
+			except (KeyboardInterrupt, SystemExit):
+				print("debug shell exit: " + sys.exc_info()[0].__name__)
+				break
 			except:
 				print("Error executing %r" % s)
 				better_exchook(*sys.exc_info(), autodebugshell=False)
