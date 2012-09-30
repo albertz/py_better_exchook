@@ -100,6 +100,7 @@ def simple_debug_shell(globals, locals):
 		except:
 			print("breaked debug shell: " + sys.exc_info()[0].__name__)
 			break
+		if s.strip() == "": continue
 		try:
 			c = compile(s, COMPILE_STRING_FN, "single")
 		except Exception as e:
