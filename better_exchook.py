@@ -145,7 +145,7 @@ def simple_debug_shell(globals, locals):
 			else:
 				try:
 					if ret is not None: print(ret)
-				except:
+				except Exception:
 					print("Error printing return value of %r" % s)
 					better_exchook(*sys.exc_info(), autodebugshell=False)
 		
@@ -183,7 +183,7 @@ def pp_extra_info(obj, depthlimit = 3):
 				pass # don't print len in this case
 			else:
 				s += ["len = " + str(obj.__len__())]
-		except: pass
+		except Exception: pass
 	if depthlimit > 0 and hasattr(obj, "__getitem__"):
 		try:
 			if type(obj) in (str,unicode):
@@ -193,7 +193,7 @@ def pp_extra_info(obj, depthlimit = 3):
 				extra_info = pp_extra_info(subobj, depthlimit - 1)
 				if extra_info != "":
 					s += ["_[0]: {" + extra_info + "}"]
-		except: pass
+		except Exception: pass
 	return ", ".join(s)
 	
 def pretty_print(obj):
@@ -320,7 +320,7 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True):
 
 	if autodebugshell:
 		try: debugshell = int(os.environ["DEBUG"]) != 0
-		except: pass
+		except Exception: pass
 	if debugshell:
 		output("---------- DEBUG SHELL -----------")
 		debug_shell(user_ns=allLocals, user_global_ns=allGlobals)
