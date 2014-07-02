@@ -36,8 +36,13 @@ import sys, os, os.path
 
 try:
 	unicode
-except NameError:
+except NameError: # Python3
 	unicode = str   # Python 3 compatibility
+
+try:
+	raw_input
+except NameError: # Python3
+	raw_input = input
 
 def parse_py_statement(line):
 	state = 0
@@ -123,7 +128,7 @@ def simple_debug_shell(globals, locals):
 	COMPILE_STRING_FN = "<simple_debug_shell input>"
 	while True:
 		try:
-			s = input("> ")
+			s = raw_input("> ")
 		except (KeyboardInterrupt, EOFError):
 			print("breaked debug shell: " + sys.exc_info()[0].__name__)
 			break
