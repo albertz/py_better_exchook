@@ -34,6 +34,11 @@
 
 import sys, os, os.path
 
+try:
+	unicode
+except NameError:
+	unicode = str   # Python 3 compatibility
+
 def parse_py_statement(line):
 	state = 0
 	curtoken = ""
@@ -118,7 +123,7 @@ def simple_debug_shell(globals, locals):
 	COMPILE_STRING_FN = "<simple_debug_shell input>"
 	while True:
 		try:
-			s = raw_input("> ")
+			s = input("> ")
 		except (KeyboardInterrupt, EOFError):
 			print("breaked debug shell: " + sys.exc_info()[0].__name__)
 			break
@@ -213,7 +218,7 @@ def print_traceback(tb=None, allLocals=None, allGlobals=None):
 			tb = sys._getframe()
 			assert tb
 		except Exception:
-			print "print_traceback: tb is None and sys._getframe() failed"
+			print("print_traceback: tb is None and sys._getframe() failed")
 			return
 	import inspect
 	isframe = inspect.isframe
@@ -262,7 +267,7 @@ def print_traceback(tb=None, allLocals=None, allGlobals=None):
 				alreadyPrintedLocals = set()
 				for tokenstr in grep_full_py_identifiers(parse_py_statement(line)):
 					splittedtoken = tuple(tokenstr.split("."))
-					for token in map(lambda i: splittedtoken[0:i], range(1, len(splittedtoken) + 1)):
+					for token in [splittedtoken[0:i] for i in range(1, len(splittedtoken) + 1)]:
 						if token in alreadyPrintedLocals: continue
 						tokenvalue = None
 						tokenvalue = _trySet(tokenvalue, "<local> ", lambda: pretty_print(_resolveIdentifier(f.f_locals, token)))
@@ -293,7 +298,7 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True):
 	if tb is not None:
 		print_traceback(tb, allLocals=allLocals, allGlobals=allGlobals)
 	else:
-		print "better_exchook: traceback unknown"
+		print("better_exchook: traceback unknown")
 	
 	import types
 	def _some_str(value):
