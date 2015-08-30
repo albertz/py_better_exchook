@@ -343,6 +343,10 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
 def install():
 	sys.excepthook = better_exchook
 
+def replace_traceback_format_tb():
+	import traceback
+	traceback.format_tb = format_tb
+
 if __name__ == "__main__":
 	# some examples
 	# this code produces this output: https://gist.github.com/922622
