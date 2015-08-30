@@ -215,7 +215,7 @@ def fallback_findfile(filename):
 	if altfn[-4:-1] == ".py": altfn = altfn[:-1] # *.pyc or whatever
 	return altfn
 
-def format_tb(tb=None, allLocals=None, allGlobals=None, limit=None):
+def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None):
 	out = []
 	def output(ln): out.append(ln + "\n")
 	if tb is None:
