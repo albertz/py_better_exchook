@@ -175,8 +175,6 @@ def debug_shell(user_ns, user_global_ns, execWrapper=None):
 	else:
 		simple_debug_shell(user_global_ns, user_ns)
 
-def output(s): print(s)
-
 def output_limit():
 	return 300
 
@@ -217,23 +215,25 @@ def fallback_findfile(filename):
 	if altfn[-4:-1] == ".py": altfn = altfn[:-1] # *.pyc or whatever
 	return altfn
 
-def print_traceback(tb=None, allLocals=None, allGlobals=None):
+def format_tb(tb=None, allLocals=None, allGlobals=None, limit=None):
+	out = []
+	def output(ln): out.append(ln + "\n")
 	if tb is None:
 		try:
 			tb = sys._getframe()
 			assert tb
 		except Exception:
 			output("print_traceback: tb is None and sys._getframe() failed")
-			return
+			return out
 	import inspect
 	isframe = inspect.isframe
 	if isframe(tb): output('Traceback (most recent call first)')
 	else: output('Traceback (most recent call last):') # expect traceback-object (or compatible)
 	try:
 		import linecache
-		limit = None
-		if hasattr(sys, 'tracebacklimit'):
-			limit = sys.tracebacklimit
+		if limit is None:
+			if hasattr(sys, 'tracebacklimit'):
+				limit = sys.tracebacklimit
 		n = 0
 		_tb = tb
 		def _resolveIdentifier(namespace, id):
@@ -292,16 +292,25 @@ def print_traceback(tb=None, allLocals=None, allGlobals=None):
 		output("ERROR: cannot get more detailed exception info because:")
 		import traceback
 		for l in traceback.format_exc().split("\n"): output("   " + l)
-		output("simple traceback:")
-		if isframe(tb): traceback.print_stack(tb)
-		else: traceback.print_tb(tb)
+
+	return out
+
+def print_tb(tb, file=None, **kwargs):
+	if file is None:
+		file = sys.stderr
+	for l in format_tb(tb=tb, **kwargs):
+		file.write(l)
+	file.flush()
 
 
-def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True):
+def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file=None):
+	if file is None:
+		file = sys.stderr
+	def output(ln): file.write(ln + "\n")
 	output("EXCEPTION")
 	allLocals,allGlobals = {},{}
 	if tb is not None:
-		print_traceback(tb, allLocals=allLocals, allGlobals=allGlobals)
+		print_tb(tb, allLocals=allLocals, allGlobals=allGlobals, file=file)
 	else:
 		output("better_exchook: traceback unknown")
 
@@ -329,6 +338,7 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True):
 	if debugshell:
 		output("---------- DEBUG SHELL -----------")
 		debug_shell(user_ns=allLocals, user_global_ns=allGlobals)
+	file.flush()
 
 def install():
 	sys.excepthook = better_exchook
