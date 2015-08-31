@@ -215,7 +215,7 @@ def fallback_findfile(filename):
 	if altfn[-4:-1] == ".py": altfn = altfn[:-1] # *.pyc or whatever
 	return altfn
 
-def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None):
+def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=False):
 	out = []
 	def output(ln): out.append(ln + "\n")
 	if tb is None:
@@ -223,12 +223,13 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None):
 			tb = sys._getframe()
 			assert tb
 		except Exception:
-			output("print_traceback: tb is None and sys._getframe() failed")
+			output("format_tb: tb is None and sys._getframe() failed")
 			return out
 	import inspect
 	isframe = inspect.isframe
-	if isframe(tb): output('Traceback (most recent call first)')
-	else: output('Traceback (most recent call last):') # expect traceback-object (or compatible)
+	if withTitle:
+		if isframe(tb): output('Traceback (most recent call first)')
+		else: output('Traceback (most recent call last):') # expect traceback-object (or compatible)
 	try:
 		import linecache
 		if limit is None:
@@ -310,7 +311,7 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
 	output("EXCEPTION")
 	allLocals,allGlobals = {},{}
 	if tb is not None:
-		print_tb(tb, allLocals=allLocals, allGlobals=allGlobals, file=file)
+		print_tb(tb, allLocals=allLocals, allGlobals=allGlobals, file=file, withTitle=True)
 	else:
 		output("better_exchook: traceback unknown")
 
