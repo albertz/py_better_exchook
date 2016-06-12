@@ -7,11 +7,23 @@ It will add some useful information for each frame,
 like printing the relevant variables (relevant = referenced in the code line).
 Also see `Python source and comments <https://github.com/albertz/py_better_exchook/blob/master/better_exchook.py>`_ for further details.
 
-Example output:
+Python code:
+
+.. code:: python
+
+	try:
+		x = {1:2, "a":"b"}
+		def f():
+			y = "foo"
+			x, 42, sys.stdin.__class__, sys.exc_info, y, z
+		f()
+	except Exception:
+		better_exchook(*sys.exc_info())
+
+Output:
 
 .. code::
 
-  $ python better_exchook.py
   EXCEPTION
   Traceback (most recent call last):
     File "better_exchook.py", line 478, in <module>
@@ -29,6 +41,21 @@ Example output:
         y = <local> 'foo'
         z = <not found>
   NameError: global name 'z' is not defined
+
+Python code:
+
+.. code:: python
+
+	try:
+		f = lambda x: None
+		f(x, y)
+	except Exception:
+		better_exchook(*sys.exc_info())
+
+Output:
+
+.. code::
+
   EXCEPTION
   Traceback (most recent call last):
     File "better_exchook.py", line 484, in <module>
@@ -38,6 +65,21 @@ Example output:
         x = <local> {'a': 'b', 1: 2}
         y = <not found>
   NameError: name 'y' is not defined
+
+Python code:
+
+.. code:: python
+
+	try:
+		(lambda x: None)(__name__,
+						         42)  # multiline
+	except Exception:
+		better_exchook(*sys.exc_info())
+
+Output:
+
+.. code::
+
   EXCEPTION
   Traceback (most recent call last):
     File "better_exchook.py", line 490, in <module>
@@ -47,6 +89,20 @@ Example output:
         x = <local> {'a': 'b', 1: 2}
         __name__ = <local> '__main__', len = 8
   TypeError: <lambda>() takes exactly 1 argument (2 given)
+  
+Python code:
+
+.. code:: python
+
+	# use this to overwrite the global exception handler
+	sys.excepthook = better_exchook
+	# and fail
+	finalfail(sys)
+
+Output:
+
+.. code::
+
   EXCEPTION
   Traceback (most recent call last):
     File "better_exchook.py", line 497, in <module>
