@@ -8,7 +8,7 @@ like printing the relevant variables (relevant = referenced in the code line).
 Also see `Python source and comments <https://github.com/albertz/py_better_exchook/blob/master/better_exchook.py>`_ for further details.
 
 You can just copy over the file ``better_exchook.py`` to your project.
-Or alternatively, it is also available `on PyPI <https://pypi.python.org/pypi/better_exchook`_
+Or alternatively, it is also available `on PyPI <https://pypi.python.org/pypi/better_exchook>`_
 and can be installed via:
 
 .. code::
