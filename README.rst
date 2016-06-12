@@ -1,3 +1,7 @@
+==============
+better_exchook
+==============
+
 A nicer drop-in-replacement for Python ``sys.excepthook``.
 See Python source and comments for further information.
 
