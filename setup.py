@@ -7,6 +7,7 @@ import time
 # Usage:
 # Registering the project: python setup.py register
 # New release: python setup.py sdist upload
+# See also MANIFEST.in for included files.
 
 
 setup(
