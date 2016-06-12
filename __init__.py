@@ -1,2 +1,3 @@
-from better_exchook import *
+
+from .better_exchook import *
 
