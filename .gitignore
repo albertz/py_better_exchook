@@ -1,1 +1,9 @@
 *.pyc
+
+# via setuptools
+/MANIFEST
+/build
+/dist
+
+# PyCharm
+/.idea
