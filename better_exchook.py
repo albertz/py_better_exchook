@@ -1,5 +1,5 @@
 
-# Copyright (c) 2012, Albert Zeyer, www.az2000.de
+# Copyright (c) 2016, Albert Zeyer, www.az2000.de
 # All rights reserved.
 # file created 2011-04-15
 
