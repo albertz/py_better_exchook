@@ -80,7 +80,7 @@ Python example code:
 
     try:
         (lambda x: None)(__name__,
-                                 42)  # multiline
+                         42)  # multiline
     except Exception:
         better_exchook(*sys.exc_info())
 
