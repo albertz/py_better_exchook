@@ -59,6 +59,8 @@ Example output:
 
 Similar projects:
  - `<https://github.com/patrys/great-justice>`_
+ - `Nose does something similar for assertion failures <http://nose.readthedocs.io/en/latest/plugins/failuredetail.html>`_.
+ - See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`_ related StackOverflow question.
 
 
 -- Albert Zeyer, <http://www.az2000.de>
