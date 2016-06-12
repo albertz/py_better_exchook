@@ -7,7 +7,15 @@ It will add some useful information for each frame,
 like printing the relevant variables (relevant = referenced in the code line).
 Also see `Python source and comments <https://github.com/albertz/py_better_exchook/blob/master/better_exchook.py>`_ for further details.
 
-Python code:
+You can just copy over the file ``better_exchook.py`` to your project.
+Or alternatively, it is also available `on PyPI <https://pypi.python.org/pypi/better_exchook`_
+and can be installed via:
+
+.. code::
+
+  pip install better_exchook
+
+Python example code:
 
 .. code:: python
 
@@ -42,7 +50,7 @@ Output:
         z = <not found>
   NameError: global name 'z' is not defined
 
-Python code:
+Python example code:
 
 .. code:: python
 
@@ -66,7 +74,7 @@ Output:
         y = <not found>
   NameError: name 'y' is not defined
 
-Python code:
+Python example code:
 
 .. code:: python
 
@@ -90,7 +98,7 @@ Output:
         __name__ = <local> '__main__', len = 8
   TypeError: <lambda>() takes exactly 1 argument (2 given)
   
-Python code:
+Python example code:
 
 .. code:: python
 
