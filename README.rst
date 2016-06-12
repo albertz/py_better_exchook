@@ -1,4 +1,4 @@
-A nicer drop-in-replacement for Python `sys.excepthook`.
+A nicer drop-in-replacement for Python ``sys.excepthook``.
 See Python source and comments for further information.
 
 Example output: <https://gist.github.com/922622>
