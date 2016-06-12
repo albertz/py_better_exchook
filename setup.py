@@ -4,6 +4,11 @@ from distutils.core import setup
 import time
 
 
+# Usage:
+# Registering the project: python setup.py register
+# New release: python setup.py sdist upload
+
+
 setup(
 	name = 'better_exchook',
 	version = time.strftime("1.%Y%m%d.%H%M%S", time.gmtime()),
