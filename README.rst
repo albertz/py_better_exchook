@@ -15,6 +15,13 @@ and can be installed via:
 
   pip install better_exchook
 
+Usage:
+
+.. code:: python
+
+  import better_exchook
+  better_exchook.install()  # will just do: sys.excepthook = better_exchook
+
 Python example code:
 
 .. code:: python
@@ -26,7 +33,7 @@ Python example code:
             x, 42, sys.stdin.__class__, sys.exc_info, y, z
         f()
     except Exception:
-        better_exchook(*sys.exc_info())
+        better_exchook.better_exchook(*sys.exc_info())
 
 Output:
 
@@ -58,7 +65,7 @@ Python example code:
         f = lambda x: None
         f(x, y)
     except Exception:
-        better_exchook(*sys.exc_info())
+        better_exchook.better_exchook(*sys.exc_info())
 
 Output:
 
@@ -82,7 +89,7 @@ Python example code:
         (lambda x: None)(__name__,
                          42)  # multiline
     except Exception:
-        better_exchook(*sys.exc_info())
+        better_exchook.better_exchook(*sys.exc_info())
 
 Output:
 
@@ -103,7 +110,7 @@ Python example code:
 .. code:: python
 
     # use this to overwrite the global exception handler
-    sys.excepthook = better_exchook
+    sys.excepthook = better_exchook.better_exchook
     # and fail
     finalfail(sys)
 
