@@ -19,14 +19,14 @@ Python example code:
 
 .. code:: python
 
-	try:
-		x = {1:2, "a":"b"}
-		def f():
-			y = "foo"
-			x, 42, sys.stdin.__class__, sys.exc_info, y, z
-		f()
-	except Exception:
-		better_exchook(*sys.exc_info())
+    try:
+        x = {1:2, "a":"b"}
+        def f():
+            y = "foo"
+            x, 42, sys.stdin.__class__, sys.exc_info, y, z
+        f()
+    except Exception:
+        better_exchook(*sys.exc_info())
 
 Output:
 
@@ -54,11 +54,11 @@ Python example code:
 
 .. code:: python
 
-	try:
-		f = lambda x: None
-		f(x, y)
-	except Exception:
-		better_exchook(*sys.exc_info())
+    try:
+        f = lambda x: None
+        f(x, y)
+    except Exception:
+        better_exchook(*sys.exc_info())
 
 Output:
 
@@ -78,11 +78,11 @@ Python example code:
 
 .. code:: python
 
-	try:
-		(lambda x: None)(__name__,
-						         42)  # multiline
-	except Exception:
-		better_exchook(*sys.exc_info())
+    try:
+        (lambda x: None)(__name__,
+                                 42)  # multiline
+    except Exception:
+        better_exchook(*sys.exc_info())
 
 Output:
 
@@ -102,10 +102,10 @@ Python example code:
 
 .. code:: python
 
-	# use this to overwrite the global exception handler
-	sys.excepthook = better_exchook
-	# and fail
-	finalfail(sys)
+    # use this to overwrite the global exception handler
+    sys.excepthook = better_exchook
+    # and fail
+    finalfail(sys)
 
 Output:
 
