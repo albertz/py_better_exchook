@@ -24,13 +24,26 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""
+https://github.com/albertz/py_better_exchook
 
-# This is a simple replacement for the standard Python exception handler (sys.excepthook).
-# In addition to what the standard handler does, it also prints all referenced variables
-# (no matter if local, global or builtin) of the code line of each stack frame.
-# See below for some examples and some example output.
+This is a simple replacement for the standard Python exception handler (sys.excepthook).
+In addition to what the standard handler does, it also prints all referenced variables
+(no matter if local, global or builtin) of the code line of each stack frame.
+See below for some examples and some example output.
 
-# https://github.com/albertz/py_better_exchook
+See these functions:
+
+- better_exchook
+- format_tb / print_tb
+- dump_all_thread_tracebacks
+- install
+- replace_traceback_format_tb
+
+Although there might be a few more useful functions, thus we export all of them.
+
+Also see the demo/tests at the end.
+"""
 
 from __future__ import print_function
 
@@ -38,12 +51,16 @@ import sys
 import os
 import os.path
 import threading
+import keyword
 try:
     from traceback import StackSummary, FrameSummary
 except ImportError:
     class _Dummy:
         pass
     StackSummary = FrameSummary = _Dummy
+
+# noinspection PySetFunctionToLiteral,SpellCheckingInspection
+pykeywords = set(keyword.kwlist) | set(["None", "True", "False"])
 
 _cur_pwd = os.getcwd()
 
@@ -119,12 +136,6 @@ def parse_py_statements(source_code):
     for line in source_code.splitlines():
         for t in parse_py_statement(line):
             yield t
-
-
-import keyword
-
-# noinspection PySetFunctionToLiteral
-pykeywords = set(keyword.kwlist) | set(["None", "True", "False"])
 
 
 def grep_full_py_identifiers(tokens):
@@ -737,10 +748,6 @@ def dump_all_thread_tracebacks(exclude_thread_ids=None, file=None):
         print("Does not have sys._current_frames, cannot get thread tracebacks.", file=file)
 
 
-def install():
-    sys.excepthook = better_exchook
-
-
 class ExtendedFrameSummary(FrameSummary):
     def __init__(self, frame, **kwargs):
         super(ExtendedFrameSummary, self).__init__(**kwargs)
@@ -802,7 +809,24 @@ def _StackSummary_extract(frame_gen, limit=None, lookup_lines=True, capture_loca
     return result
 
 
+def install():
+    """
+    Replaces sys.excepthook by our better_exchook.
+    """
+    sys.excepthook = better_exchook
+
+
 def replace_traceback_format_tb():
+    """
+    Replaces these functions from the traceback module by our own:
+
+    - traceback.format_tb
+    - traceback.StackSummary.format
+    - traceback.StackSummary.extract
+
+    Note that this kind of monkey patching might not be safe under all circumstances
+    and is not officially supported by Python.
+    """
     import traceback
     traceback.format_tb = format_tb
     if hasattr(traceback, "StackSummary"):
