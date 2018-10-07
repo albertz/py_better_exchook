@@ -36,6 +36,7 @@ See these functions:
 
 - better_exchook
 - format_tb / print_tb
+- iter_traceback
 - dump_all_thread_tracebacks
 - install
 - replace_traceback_format_tb
@@ -52,6 +53,7 @@ import os
 import os.path
 import threading
 import keyword
+import inspect
 try:
     from traceback import StackSummary, FrameSummary
 except ImportError:
@@ -506,18 +508,33 @@ class Color:
         return out
 
 
-def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=False, with_color=None):
+def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=False, with_color=None, with_vars=None):
     """
-    :param types.TracebackType|types.FrameType|StackSummary tb: traceback
+    :param types.TracebackType|types.FrameType|StackSummary tb: traceback. if None, will use sys._getframe
     :param int|None limit: limit the traceback to this number of frames. by default, will look at sys.tracebacklimit
     :param dict[str]|None allLocals: if set, will update it with all locals from all frames
     :param dict[str]|None allGlobals: if set, will update it with all globals from all frames
     :param bool withTitle:
     :param bool|None with_color: output with ANSI escape codes for color
+    :param bool with_vars: will print var content which are referenced in the source code line. by default enabled.
     :return: list of strings (line-based)
     :rtype: list[str]
     """
-    is_at_exit = not threading.main_thread().is_alive()
+    if with_vars is None and not threading.main_thread().is_alive():
+        # Better to not show __repr__ of some vars, as this might lead to crashes
+        # when native extensions are involved.
+        with_vars = False
+    if with_vars is None and hasattr(sys, "_getframe"):
+        if any([f.f_code.co_name == "__del__" for f in iter_traceback()]):
+            # __del__ is usually called via the Python garbage collector (GC).
+            # This can happen and very random / non-deterministic places.
+            # There are cases where it is not safe to access some of the vars on the stack
+            # because they might be in a non-well-defined state, thus calling their __repr__ is not safe.
+            # See e.g. this bug:
+            # https://github.com/tensorflow/tensorflow/issues/22770
+            with_vars = False
+    if with_vars is None:
+        with_vars = True
     color = Color(enable=with_color)
     out = []
     def output(s1, s2=None, **kwargs):
@@ -541,8 +558,6 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
         except Exception:
             output(color("format_tb: tb is None and sys._getframe() failed", "red", bold=True))
             return out
-    import inspect
-    import traceback
     def isstacksummary(_tb):
         return isinstance(_tb, StackSummary)
     isframe = inspect.isframe
@@ -605,9 +620,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             if source_code:
                 source_code = remove_indent_lines(replace_tab_indents(source_code)).rstrip()
                 output("    line: ", color.py_syntax_highlight(source_code), color="blue")
-                if is_at_exit:
-                    # Better to not show __repr__ of some vars, as this might lead to crashes
-                    # when native extensions are involved.
+                if not with_vars:
                     pass
                 elif isinstance(f, DummyFrame) and not f.have_vars_available:
                     pass
@@ -633,7 +646,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             if isframe(_tb):
                 _tb = _tb.f_back
             elif isstacksummary(_tb):
-                _tb = traceback.StackSummary.from_list(_tb[1:])
+                _tb = StackSummary.from_list(_tb[1:])
                 if not _tb:
                     _tb = None
             else:
@@ -746,6 +759,60 @@ def dump_all_thread_tracebacks(exclude_thread_ids=None, file=None):
         print("That were all threads.", file=file)
     else:
         print("Does not have sys._current_frames, cannot get thread tracebacks.", file=file)
+
+
+def iter_traceback(tb=None, enforce_most_recent_call_first=False):
+    """
+    Iterates a traceback of various formats:
+      - traceback (types.TracebackType)
+      - frame object (types.FrameType)
+      - stack summary (traceback.StackSummary)
+
+    :param types.TracebackType|types.FrameType|StackSummary|None tb: traceback. if None, will use sys._getframe
+    :param bool enforce_most_recent_call_first:
+        Frame or stack summery: most recent call first (top of the stack is the first entry in the result)
+        Traceback: most recent call last
+        If True, and we get traceback, will unroll and reverse, such that we have always the most recent call first.
+    :return: yields the frames (types.FrameType)
+    :rtype: list[types.FrameType|DummyFrame]
+    """
+    if tb is None:
+        tb = sys._getframe()
+
+    def is_stack_summary(_tb):
+        return isinstance(_tb, StackSummary)
+
+    is_frame = inspect.isframe
+    is_traceback = inspect.istraceback
+    assert is_traceback(tb) or is_frame(tb) or is_stack_summary(tb)
+    # Frame or stack summery: most recent call first
+    # Traceback: most recent call last
+    if is_traceback(tb) and enforce_most_recent_call_first:
+        frames = list(iter_traceback(tb))
+        for frame in frames[::-1]:
+            yield frame
+        return
+
+    _tb = tb
+    while _tb is not None:
+        if is_frame(_tb):
+            frame = _tb
+        elif is_stack_summary(_tb):
+            if isinstance(_tb[0], ExtendedFrameSummary):
+                frame = _tb[0].tb_frame
+            else:
+                frame = DummyFrame.from_frame_summary(_tb[0])
+        else:
+            frame = _tb.tb_frame
+        yield frame
+        if is_frame(_tb):
+            _tb = _tb.f_back
+        elif is_stack_summary(_tb):
+            _tb = StackSummary.from_list(_tb[1:])
+            if not _tb:
+                _tb = None
+        else:
+            _tb = _tb.tb_next
 
 
 class ExtendedFrameSummary(FrameSummary):
