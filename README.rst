@@ -131,6 +131,8 @@ Output:
 Similar projects:
  - `<https://github.com/patrys/great-justice>`_
  - `Nose does something similar for assertion failures <http://nose.readthedocs.io/en/latest/plugins/failuredetail.html>`_.
+ - IPython has something similar (`this <https://github.com/ipython/ipython/blob/master/IPython/core/ultratb.py>`_). Do this: ``from IPython.core import ultratb; sys.excepthook = ultratb.VerboseTB()``.
+ - Ka-Ping Yee's "cgitb.py", which is part of Python, `see here <https://docs.python.org/3/library/cgitb.html>`_, `code here <https://github.com/python/cpython/blob/3.7/Lib/cgitb.py>`_.
  - See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`_ related StackOverflow question.
 
 
