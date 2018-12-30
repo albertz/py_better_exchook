@@ -1,4 +1,5 @@
 
+# -*- coding: utf-8 -*-
 # Copyright (c) 2016, Albert Zeyer, www.az2000.de
 # All rights reserved.
 # file created 2011-04-15
@@ -55,6 +56,7 @@ import os.path
 import threading
 import keyword
 import inspect
+import contextlib
 try:
     from traceback import StackSummary, FrameSummary
 except ImportError:
@@ -443,6 +445,12 @@ class Color:
             return s
         start = "\x1b[%sm" % ";".join(map(str, code_seq))
         end = "\x1b[0m"
+        while s[:1] == " ":  # move prefix spaces outside
+            start = " " + start
+            s = s[1:]
+        while s[-1:] == " ":  # move postfix spaces outside
+            end += " "
+            s = s[:-1]
         return start + s + end
 
     def __call__(self, *args, **kwargs):
@@ -510,6 +518,117 @@ class Color:
         return out
 
 
+class DomTerm:
+    """
+    DomTerm (https://github.com/PerBothner/DomTerm/) is a terminal emulator
+    with many extended escape codes, such as folding text away, or even generic HTML.
+    We can make use of some of these features (currently just folding text).
+    """
+
+    _is_domterm = None
+
+    @classmethod
+    def is_domterm(cls):
+        """
+        :return: whether we are inside DomTerm
+        :rtype: bool
+        """
+        import os
+        if cls._is_domterm is not None:
+            return cls._is_domterm
+        if not os.environ.get("DOMTERM"):
+            cls._is_domterm = False
+            return False
+        cls._is_domterm = True
+        return True
+
+    @contextlib.contextmanager
+    def logical_block(self, file=sys.stdout):
+        file.write("\033]110\007")
+        yield
+        file.write("\033]111\007")
+
+    @contextlib.contextmanager
+    def hide_button_span(self, mode, file=sys.stdout):
+        """
+        :param int mode: 1 or 2
+        """
+        file.write("\033[83;%iu" % mode)
+        yield
+        file.write("\033[83;0u")
+
+    def indentation(self, file=sys.stdout):
+        file.write("\033]114;\"│\"\007")
+
+    def hide_button(self, file=sys.stdout):
+        file.write("\033[16u▶▼\033[17u")
+
+    @contextlib.contextmanager
+    def _temp_replace_attrib(self, obj, attr, new_value):
+        old_value = getattr(obj, attr)
+        setattr(obj, attr, new_value)
+        yield old_value
+        setattr(obj, attr, old_value)
+
+    @contextlib.contextmanager
+    def fold_text_stream(self, prefix, postfix="", hidden_stream=None, **kwargs):
+        """
+        :param str prefix: always visible
+        :param str postfix: always visible, right after.
+        :param io.Base hidden_stream: sys.stdout by default.
+            If this is sys.stdout, it will replace that stream,
+            and collect the data during the context (in the `with` block).
+        :param io.IOBase file: sys.stdout by default.
+        """
+        import io
+        if hidden_stream is None:
+            hidden_stream = sys.stdout
+        assert isinstance(hidden_stream, io.IOBase)
+        assert hidden_stream is sys.stdout, "currently not supported otherwise"
+        hidden_buf = io.StringIO()
+        with self._temp_replace_attrib(sys, "stdout", hidden_buf):
+            yield
+        self.fold_text(prefix=prefix, postfix=postfix, hidden=hidden_buf.getvalue(), **kwargs)
+
+    def fold_text(self, prefix, hidden, postfix="", file=None, align=0):
+        """
+        :param str prefix: always visible
+        :param str hidden: hidden
+            If this is sys.stdout, it will replace that stream,
+            and collect the data during the context (in the `with` block).
+        :param str postfix: always visible, right after. "" by default.
+        :param io.IOBase file: sys.stdout by default.
+        :param int align: remove this number of initial chars from hidden
+        """
+        if file is None:
+            file = sys.stdout
+        # Extra logic: Multi-line hidden. Add initial "\n" if not there.
+        if "\n" in hidden:
+            if hidden[:1] != "\n":
+                hidden = "\n" + hidden
+        # Extra logic: A final "\n" of hidden, make it always visible such that it looks nicer.
+        if hidden[-1:] == "\n":
+            hidden = hidden[:-1]
+            postfix += "\n"
+        if self.is_domterm():
+            with self.logical_block(file=file):
+                self.indentation(file=file)
+                self.hide_button(file=file)
+                file.write(prefix)
+                if prefix.endswith("\x1b[0m"):
+                    file.write(" ")  # bug in DomTerm?
+                with self.hide_button_span(2, file=file):
+                    hidden_ls = hidden.split("\n")
+                    hidden_ls = [s[align:] for s in hidden_ls]
+                    hidden = "\033]118\007".join(hidden_ls)
+                    file.write(hidden)
+        else:
+            file.write(prefix)
+            file.write(hidden.replace("\n", "\n "))
+        file.write(postfix)
+        file.flush()
+
+
 def is_at_exit():
     """
     Some heuristics to figure out whether this is called at a stage where the Python interpreter is shutting down.
@@ -527,6 +646,57 @@ def is_at_exit():
     return False
 
 
+class _Output:
+    def __init__(self, color):
+        """
+        :param Color color:
+        """
+        self.color = color
+        self.lines = []
+        self.dom_term = DomTerm() if DomTerm.is_domterm() else None
+
+    def __call__(self, s1, s2=None, **kwargs):
+        """
+        Adds to self.lines.
+        This strange function signature is for historical reasons.
+
+        :param str s1:
+        :param str|None s2:
+        :param kwargs: passed to self.color
+        """
+        if kwargs:
+            s1 = self.color(s1, **kwargs)
+        if s2 is not None:
+            s1 = add_indent_lines(s1, s2)
+        self.lines.append(s1 + "\n")
+
+    @contextlib.contextmanager
+    def fold_text_ctx(self, line):
+        """
+        Folds text, via :class:`DomTerm`, if available.
+        Notes that this temporarily overwrites self.lines.
+
+        :param str line: always visible
+        """
+        if not self.dom_term:
+            self.__call__(line)
+            yield
+            return
+        self.lines, old_lines = [], self.lines  # overwrite self.lines
+        yield  # collect output (in new self.lines)
+        self.lines, new_lines = old_lines, self.lines  # recover self.lines
+        hidden_text = "".join(new_lines)
+        import io
+        output_buf = io.StringIO()
+        prefix = ""
+        while line[:1] == " ":
+            prefix += " "
+            line = line[1:]
+        self.dom_term.fold_text(line, hidden=hidden_text, file=output_buf, align=len(prefix))
+        output_text = prefix[1:] + output_buf.getvalue()
+        self.lines.append(output_text)
+
+
 def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=False, with_color=None, with_vars=None):
     """
     :param types.TracebackType|types.FrameType|StackSummary tb: traceback. if None, will use sys._getframe
@@ -540,13 +710,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
     :rtype: list[str]
     """
     color = Color(enable=with_color)
-    out = []
-    def output(s1, s2=None, **kwargs):
-        if kwargs:
-            s1 = color(s1, **kwargs)
-        if s2 is not None:
-            s1 = add_indent_lines(s1, s2)
-        out.append(s1 + "\n")
+    output = _Output(color=color)
     def format_filename(s):
         base = os.path.basename(s)
         return (
@@ -561,7 +725,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             assert tb
         except Exception:
             output(color("format_tb: tb is None and sys._getframe() failed", "red", bold=True))
-            return out
+            return output.lines
     def isstacksummary(_tb):
         return isinstance(_tb, StackSummary)
     isframe = inspect.isframe
@@ -628,44 +792,45 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             co = f.f_code
             filename = co.co_filename
             name = co.co_name
-            output("".join([
+            file_descr = "".join([
                 '  ',
                 color("File ", "blue", bold=True), format_filename(filename), ", ",
                 color("line ", "blue"), color("%d" % lineno, "magenta"), ", ",
-                color("in ", "blue"), name]))
-            if not os.path.isfile(filename):
-                altfn = fallback_findfile(filename)
-                if altfn:
-                    output(color("    -- couldn't find file, trying this instead: ", "blue") +
-                           format_filename(altfn))
-                    filename = altfn
-            source_code = get_source_code(filename, lineno, f.f_globals)
-            if source_code:
-                source_code = remove_indent_lines(replace_tab_indents(source_code)).rstrip()
-                output("    line: ", color.py_syntax_highlight(source_code), color="blue")
-                if not with_vars:
-                    pass
-                elif isinstance(f, DummyFrame) and not f.have_vars_available:
-                    pass
+                color("in ", "blue"), name])
+            with output.fold_text_ctx(file_descr):
+                if not os.path.isfile(filename):
+                    altfn = fallback_findfile(filename)
+                    if altfn:
+                        output(color("    -- couldn't find file, trying this instead: ", "blue") +
+                            format_filename(altfn))
+                        filename = altfn
+                source_code = get_source_code(filename, lineno, f.f_globals)
+                if source_code:
+                    source_code = remove_indent_lines(replace_tab_indents(source_code)).rstrip()
+                    output("    line: ", color.py_syntax_highlight(source_code), color="blue")
+                    if not with_vars:
+                        pass
+                    elif isinstance(f, DummyFrame) and not f.have_vars_available:
+                        pass
+                    else:
+                        with output.fold_text_ctx(color('    locals:', "blue")):
+                            alreadyPrintedLocals = set()
+                            for tokenstr in grep_full_py_identifiers(parse_py_statement(source_code)):
+                                splittedtoken = tuple(tokenstr.split("."))
+                                for token in [splittedtoken[0:i] for i in range(1, len(splittedtoken) + 1)]:
+                                    if token in alreadyPrintedLocals: continue
+                                    tokenvalue = None
+                                    tokenvalue = _try_set(tokenvalue, color("<local> ", "blue"), lambda: format_py_obj(_resolve_identifier(f.f_locals, token)))
+                                    tokenvalue = _try_set(tokenvalue, color("<global> ", "blue"), lambda: format_py_obj(_resolve_identifier(f.f_globals, token)))
+                                    tokenvalue = _try_set(tokenvalue, color("<builtin> ", "blue"), lambda: format_py_obj(_resolve_identifier(f.f_builtins, token)))
+                                    tokenvalue = tokenvalue or color("<not found>", "blue")
+                                    prefix = '      %s ' % color(".", "blue", bold=True).join(token) + color("= ", "blue", bold=True)
+                                    output(prefix, tokenvalue)
+                                    alreadyPrintedLocals.add(token)
+                            if len(alreadyPrintedLocals) == 0:
+                                output(color("       no locals", "blue"))
                 else:
-                    output(color('    locals:', "blue"))
-                    alreadyPrintedLocals = set()
-                    for tokenstr in grep_full_py_identifiers(parse_py_statement(source_code)):
-                        splittedtoken = tuple(tokenstr.split("."))
-                        for token in [splittedtoken[0:i] for i in range(1, len(splittedtoken) + 1)]:
-                            if token in alreadyPrintedLocals: continue
-                            tokenvalue = None
-                            tokenvalue = _try_set(tokenvalue, color("<local> ", "blue"), lambda: format_py_obj(_resolve_identifier(f.f_locals, token)))
-                            tokenvalue = _try_set(tokenvalue, color("<global> ", "blue"), lambda: format_py_obj(_resolve_identifier(f.f_globals, token)))
-                            tokenvalue = _try_set(tokenvalue, color("<builtin> ", "blue"), lambda: format_py_obj(_resolve_identifier(f.f_builtins, token)))
-                            tokenvalue = tokenvalue or color("<not found>", "blue")
-                            prefix = '      %s ' % color(".", "blue", bold=True).join(token) + color("= ", "blue", bold=True)
-                            output(prefix, tokenvalue)
-                            alreadyPrintedLocals.add(token)
-                    if len(alreadyPrintedLocals) == 0:
-                        output(color("       no locals", "blue"))
-            else:
-                output(color('    -- code not available --', "blue"))
+                    output(color('    -- code not available --', "blue"))
             if isframe(_tb):
                 _tb = _tb.f_back
             elif isstacksummary(_tb):
@@ -682,7 +847,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
         for l in traceback.format_exc().split("\n"):
             output("   " + l)
 
-    return out
+    return output.lines
 
 
 def print_tb(tb, file=None, **kwargs):
