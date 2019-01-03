@@ -256,38 +256,6 @@ def output_limit():
     return 300
 
 
-def pp_extra_info(obj, depthlimit = 3):
-    s = []
-    if hasattr(obj, "__len__"):
-        try:
-            if type(obj) in (str,unicode,list,tuple,dict) and len(obj) <= 5:
-                pass # don't print len in this case
-            else:
-                s += ["len = " + str(obj.__len__())]
-        except Exception: pass
-    if depthlimit > 0 and hasattr(obj, "__getitem__"):
-        try:
-            if type(obj) in (str,unicode):
-                pass # doesn't make sense to get subitems here
-            else:
-                subobj = obj.__getitem__(0)
-                extra_info = pp_extra_info(subobj, depthlimit - 1)
-                if extra_info != "":
-                    s += ["_[0]: {" + extra_info + "}"]
-        except Exception: pass
-    return ", ".join(s)
-
-
-def pretty_print(obj):
-    s = repr(obj)
-    limit = output_limit()
-    if len(s) > limit:
-        s = s[:limit - 3] + "..."
-    extra_info = pp_extra_info(obj)
-    if extra_info != "": s += ", " + extra_info
-    return s
-
-
 def fallback_findfile(filename):
     mods = [m for m in sys.modules.values() if m and hasattr(m, "__file__") and filename in m.__file__]
     if len(mods) == 0:
@@ -628,6 +596,12 @@ class DomTerm:
         file.write(postfix)
         file.flush()
 
+    def fold_text_string(self, prefix, hidden, **kwargs):
+        import io
+        output_buf = io.StringIO()
+        self.fold_text(prefix=prefix, hidden=hidden, file=output_buf, **kwargs)
+        return output_buf.getvalue()
+
 
 def is_at_exit():
     """
@@ -696,6 +670,45 @@ class _Output:
         output_text = prefix[1:] + output_buf.getvalue()
         self.lines.append(output_text)
 
+    def _pp_extra_info(self, obj, depthlimit=3):
+        s = []
+        if hasattr(obj, "__len__"):
+            try:
+                if type(obj) in (str,unicode,list,tuple,dict) and len(obj) <= 5:
+                    pass # don't print len in this case
+                else:
+                    s += ["len = " + str(obj.__len__())]
+            except Exception: pass
+        if depthlimit > 0 and hasattr(obj, "__getitem__"):
+            try:
+                if type(obj) in (str,unicode):
+                    pass # doesn't make sense to get subitems here
+                else:
+                    subobj = obj.__getitem__(0)
+                    extra_info = self._pp_extra_info(subobj, depthlimit - 1)
+                    if extra_info != "":
+                        s += ["_[0]: {" + extra_info + "}"]
+            except Exception: pass
+        return ", ".join(s)
+
+    def pretty_print(self, obj):
+        s = repr(obj)
+        limit = output_limit()
+        if len(s) > limit:
+            if self.dom_term:
+                s = self.color.py_syntax_highlight(s)
+                s = self.dom_term.fold_text_string("", s)
+            else:
+                s = s[:limit - 3]  # cut before syntax highlighting, to avoid missing color endings
+                s = self.color.py_syntax_highlight(s)
+                s += "..."
+        else:
+            s = self.color.py_syntax_highlight(s)
+        extra_info = self._pp_extra_info(obj)
+        if extra_info != "":
+            s += ", " + self.color.py_syntax_highlight(extra_info)
+        return s
+
 
 def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=False, with_color=None, with_vars=None):
     """
@@ -717,8 +730,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             color('"' + s[:-len(base)], "cyan") +
             color(base, "cyan", bold=True) +
             color('"', "cyan"))
-    def format_py_obj(obj):
-        return color.py_syntax_highlight(pretty_print(obj))
+    format_py_obj = output.pretty_print
     if tb is None:
         try:
             tb = get_current_frame()
@@ -1193,6 +1205,19 @@ if __name__ == "__main__":
                     "     line repr>")
         obj = Obj()
         assert not obj
+    except Exception:
+        better_exchook(*sys.exc_info())
+
+    def f1(a):
+        f2(a + 1, 2)
+    def f2(a, b):
+        f3(a + b)
+    def f3(a):
+        b = ("abc" * 100) + "-interesting"  # some long demo str
+        a(b)  # error, not callable
+
+    try:
+        f1(13)
     except Exception:
         better_exchook(*sys.exc_info())
 
