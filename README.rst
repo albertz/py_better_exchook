@@ -2,12 +2,28 @@
 better_exchook
 ==============
 
-A nicer drop-in-replacement for Python ``sys.excepthook``.
+A nicer drop-in-replacement for Python ``sys.excepthook``,
+i.e. it prints stack traces with extended information.
 It will add some useful information for each frame,
 like printing the relevant variables (relevant = referenced in the code line).
 Also see `Python source and comments <https://github.com/albertz/py_better_exchook/blob/master/better_exchook.py>`_ for further details.
 
-You can just copy over the file ``better_exchook.py`` to your project.
+Features
+--------
+* Multi-line Python statements in the stack trace output.
+* Colored/formated output of each frame.
+* Syntax highlighting for the Python source code.
+* Support for `DomTerm <https://github.com/PerBothner/DomTerm>`_,
+  where it folds all the details of each stack frame away by default,
+  and thus provides a much more comprehensive overview,
+  while still providing all the details when needed.
+
+
+Installation
+------------
+
+You can just copy over the single file ``better_exchook.py`` to your project.
+
 Or alternatively, it is also available `on PyPI <https://pypi.python.org/pypi/better_exchook>`_
 and can be installed via:
 
@@ -15,12 +31,18 @@ and can be installed via:
 
   pip install better_exchook
 
-Usage:
+
+Usage
+-----
 
 .. code:: python
 
   import better_exchook
   better_exchook.install()  # will just do: sys.excepthook = better_exchook
+
+
+Examples
+--------
 
 Python example code:
 
@@ -128,7 +150,9 @@ Output:
   NameError: name 'finalfail' is not defined
 
 
-Similar projects:
+Similar projects
+----------------
+
  - `<https://github.com/patrys/great-justice>`_
  - `Nose does something similar for assertion failures <http://nose.readthedocs.io/en/latest/plugins/failuredetail.html>`_.
  - IPython has something similar (`this <https://github.com/ipython/ipython/blob/master/IPython/core/ultratb.py>`_). Do this: ``from IPython.core import ultratb; sys.excepthook = ultratb.VerboseTB()``.
