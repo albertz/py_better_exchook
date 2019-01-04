@@ -152,8 +152,8 @@ Output:
 Screenshot:
 
 .. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screenshot1.png
-   
-Screencast with [DomTerm](http://domterm.org):
+
+Screencast with `DomTerm <http://domterm.org>`_:
 
 .. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screencast-domterm.gif
 
