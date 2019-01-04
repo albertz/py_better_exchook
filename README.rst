@@ -149,15 +149,23 @@ Output:
         sys = <local> <module 'sys' (built-in)>
   NameError: name 'finalfail' is not defined
 
+Screenshot:
+
+.. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screenshot1.png
+   
+Screencast with [DomTerm](http://domterm.org):
+
+.. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screencast-domterm.gif
+
 
 Similar projects
 ----------------
 
- - `<https://github.com/patrys/great-justice>`_
- - `Nose does something similar for assertion failures <http://nose.readthedocs.io/en/latest/plugins/failuredetail.html>`_.
- - IPython has something similar (`this <https://github.com/ipython/ipython/blob/master/IPython/core/ultratb.py>`_). Do this: ``from IPython.core import ultratb; sys.excepthook = ultratb.VerboseTB()``.
- - Ka-Ping Yee's "cgitb.py", which is part of Python, `see here <https://docs.python.org/3/library/cgitb.html>`_, `code here <https://github.com/python/cpython/blob/3.7/Lib/cgitb.py>`_.
- - See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`_ related StackOverflow question.
+* `<https://github.com/patrys/great-justice>`_
+* `Nose does something similar for assertion failures <http://nose.readthedocs.io/en/latest/plugins/failuredetail.html>`_.
+* IPython has something similar (`this <https://github.com/ipython/ipython/blob/master/IPython/core/ultratb.py>`_). Do this: ``from IPython.core import ultratb; sys.excepthook = ultratb.VerboseTB()``.
+* Ka-Ping Yee's "cgitb.py", which is part of Python, `see here <https://docs.python.org/3/library/cgitb.html>`_, `code here <https://github.com/python/cpython/blob/3.7/Lib/cgitb.py>`_.
+* See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`_ related StackOverflow question.
 
 
 -- Albert Zeyer, <http://www.az2000.de>
