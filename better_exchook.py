@@ -418,6 +418,31 @@ class Color:
     def get_global_color_enabled(cls):
         return to_bool(os.environ.get("CLICOLOR", ""), fallback=True)
 
+    @classmethod
+    def is_dark_terminal_background(cls):
+        """
+        :return: Whether we have a dark Terminal background color, or None if unknown.
+            We currently just check the env var COLORFGBG,
+            which some terminals define like "<foreground-color>:<background-color>",
+            and if <background-color> in {0,1,2,3,4,5,6,8}, then we have some dark background.
+            There are many other complex heuristics we could do here, which work in some cases but not in others.
+            See e.g. `here <https://stackoverflow.com/questions/2507337/terminals-background-color>`__.
+            But instead of adding more heuristics, we think that explicitly setting COLORFGBG would be the best thing,
+            in case it's not like you want it.
+        :rtype: bool|None
+        """
+        if os.environ.get("COLORFGBG", None):
+            parts = os.environ["COLORFGBG"].split(";")
+            try:
+                last_number = int(parts[-1])
+                if 0 <= last_number <= 6 or last_number == 8:
+                    return True
+                else:
+                    return False
+            except ValueError:  # not an integer?
+                pass
+        return None  # unknown (and bool(None) == False, i.e. expect light by default)
+
     def __init__(self, enable=None):
         """
         :param bool|None enable:
@@ -425,11 +450,20 @@ class Color:
         if enable is None:
             enable = self.get_global_color_enabled()
         self.enable = enable
+        self._dark_terminal_background = self.is_dark_terminal_background()
+        # Set color palettes (will be used sometimes as bold, sometimes as normal).
+        # 5 colors, for: code/general, error-msg, string, comment, line-nr.
+        # Try to set them in a way such that if we guessed the terminal background color wrongly,
+        # it is still not too bad (although people might disagree here...).
+        if self._dark_terminal_background:
+            self.fg_colors = ["yellow", "red", "cyan", "white", "magenta"]
+        else:
+            self.fg_colors = ["blue", "red", "cyan", "white", "magenta"]
 
     def color(self, s, color=None, bold=False):
         """
         :param str s:
-        :param str|None color: e.g. "blue"
+        :param str|None color: sth in self.ColorIdxTable
         :param bool bold:
         :return: s optionally wrapped with ansi escape codes
         :rtype: str
@@ -468,7 +502,7 @@ class Color:
 
         def finish_identifier():
             if cur_token in py_keywords:
-                color_args[max([k for k in color_args.keys() if k < i])] = {"color": "blue"}
+                color_args[max([k for k in color_args.keys() if k < i])] = {"color": self.fg_colors[0]}
         while i < len(s):
             c = s[i]
             i += 1
@@ -481,16 +515,16 @@ class Color:
                 if c in spaces:
                     pass
                 elif c in ops:
-                    color_args[i - 1] = {"color": "blue"}
+                    color_args[i - 1] = {"color": self.fg_colors[0]}
                     color_args[i] = {}
                 elif c == "#":
-                    color_args[i - 1] = {"color": "white"}
+                    color_args[i - 1] = {"color": self.fg_colors[3]}
                     state = 6
                 elif c == '"':
-                    color_args[i - 1] = {"color": "cyan"}
+                    color_args[i - 1] = {"color": self.fg_colors[2]}
                     state = 1
                 elif c == "'":
-                    color_args[i - 1] = {"color": "cyan"}
+                    color_args[i - 1] = {"color": self.fg_colors[2]}
                     state = 2
                 else:
                     cur_token = c
@@ -776,9 +810,9 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
     def format_filename(s):
         base = os.path.basename(s)
         return (
-            color('"' + s[:-len(base)], "cyan") +
-            color(base, "cyan", bold=True) +
-            color('"', "cyan"))
+            color('"' + s[:-len(base)], color.fg_colors[2]) +
+            color(base, color.fg_colors[2], bold=True) +
+            color('"', color.fg_colors[2]))
     format_py_obj = output.pretty_print
     if tb is None:
         # noinspection PyBroadException
@@ -786,7 +820,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             tb = get_current_frame()
             assert tb
         except Exception:
-            output(color("format_tb: tb is None and sys._getframe() failed", "red", bold=True))
+            output(color("format_tb: tb is None and sys._getframe() failed", color.fg_colors[1], bold=True))
             return output.lines
 
     def is_stack_summary(_tb):
@@ -794,9 +828,9 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
     isframe = inspect.isframe
     if withTitle:
         if isframe(tb) or is_stack_summary(tb):
-            output(color('Traceback (most recent call first):', "blue"))
+            output(color('Traceback (most recent call first):', color.fg_colors[0]))
         else:  # expect traceback-object (or compatible)
-            output(color('Traceback (most recent call last):', "blue"))
+            output(color('Traceback (most recent call last):', color.fg_colors[0]))
     if with_vars is None and is_at_exit():
         # Better to not show __repr__ of some vars, as this might lead to crashes
         # when native extensions are involved.
@@ -869,27 +903,27 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             name = co.co_name
             file_descr = "".join([
                 '  ',
-                color("File ", "blue", bold=True), format_filename(filename), ", ",
-                color("line ", "blue"), color("%d" % lineno, "magenta"), ", ",
-                color("in ", "blue"), name])
+                color("File ", color.fg_colors[0], bold=True), format_filename(filename), ", ",
+                color("line ", color.fg_colors[0]), color("%d" % lineno, color.fg_colors[4]), ", ",
+                color("in ", color.fg_colors[0]), name])
             with output.fold_text_ctx(file_descr):
                 if not os.path.isfile(filename):
                     alt_fn = fallback_findfile(filename)
                     if alt_fn:
                         output(
-                            color("    -- couldn't find file, trying this instead: ", "blue") +
+                            color("    -- couldn't find file, trying this instead: ", color.fg_colors[0]) +
                             format_filename(alt_fn))
                         filename = alt_fn
                 source_code = get_source_code(filename, lineno, f.f_globals)
                 if source_code:
                     source_code = remove_indent_lines(replace_tab_indents(source_code)).rstrip()
-                    output("    line: ", color.py_syntax_highlight(source_code), color="blue")
+                    output("    line: ", color.py_syntax_highlight(source_code), color=color.fg_colors[0])
                     if not with_vars:
                         pass
                     elif isinstance(f, DummyFrame) and not f.have_vars_available:
                         pass
                     else:
-                        with output.fold_text_ctx(color('    locals:', "blue")):
+                        with output.fold_text_ctx(color('    locals:', color.fg_colors[0])):
                             already_printed_locals = set()
                             for token_str in grep_full_py_identifiers(parse_py_statement(source_code)):
                                 splitted_token = tuple(token_str.split("."))
@@ -898,24 +932,24 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
                                         continue
                                     token_value = None
                                     token_value = _try_set(
-                                        token_value, color("<local> ", "blue"),
+                                        token_value, color("<local> ", color.fg_colors[0]),
                                         lambda: format_py_obj(_resolve_identifier(f.f_locals, token)))
                                     token_value = _try_set(
-                                        token_value, color("<global> ", "blue"),
+                                        token_value, color("<global> ", color.fg_colors[0]),
                                         lambda: format_py_obj(_resolve_identifier(f.f_globals, token)))
                                     token_value = _try_set(
-                                        token_value, color("<builtin> ", "blue"),
+                                        token_value, color("<builtin> ", color.fg_colors[0]),
                                         lambda: format_py_obj(_resolve_identifier(f.f_builtins, token)))
-                                    token_value = token_value or color("<not found>", "blue")
+                                    token_value = token_value or color("<not found>", color.fg_colors[0])
                                     prefix = (
-                                        '      %s ' % color(".", "blue", bold=True).join(token) +
-                                        color("= ", "blue", bold=True))
+                                        '      %s ' % color(".", color.fg_colors[0], bold=True).join(token) +
+                                        color("= ", color.fg_colors[0], bold=True))
                                     output(prefix, token_value)
                                     already_printed_locals.add(token)
                             if len(already_printed_locals) == 0:
-                                output(color("       no locals", "blue"))
+                                output(color("       no locals", color.fg_colors[0]))
                 else:
-                    output(color('    -- code not available --', "blue"))
+                    output(color('    -- code not available --', color.fg_colors[0]))
             if isframe(_tb):
                 _tb = _tb.f_back
             elif is_stack_summary(_tb):
@@ -927,7 +961,7 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
             n += 1
 
     except Exception as e:
-        output(color("ERROR: cannot get more detailed exception info because:", "red", bold=True))
+        output(color("ERROR: cannot get more detailed exception info because:", color.fg_colors[1], bold=True))
         import traceback
         for l in traceback.format_exc().split("\n"):
             output("   " + l)
@@ -962,12 +996,12 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
         file.write(ln + "\n")
 
     color = Color(enable=with_color)
-    output(color("EXCEPTION", "red", bold=True))
+    output(color("EXCEPTION", color.fg_colors[1], bold=True))
     all_locals, all_globals = {}, {}
     if tb is not None:
         print_tb(tb, allLocals=all_locals, allGlobals=all_globals, file=file, withTitle=True, with_color=color.enable)
     else:
-        output(color("better_exchook: traceback unknown", "red"))
+        output(color("better_exchook: traceback unknown", color.fg_colors[1]))
 
     import types
 
@@ -980,9 +1014,9 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
     def _format_final_exc_line(etype, value):
         value_str = _some_str(value)
         if value is None or not value_str:
-            line = color("%s" % etype, "red")
+            line = color("%s" % etype, color.fg_colors[1])
         else:
-            line = color("%s" % etype, "red") + ": %s" % (value_str,)
+            line = color("%s" % etype, color.fg_colors[1]) + ": %s" % (value_str,)
         return line
 
     if (isinstance(etype, BaseException) or
