@@ -1459,7 +1459,7 @@ def replace_traceback_format_tb():
 # ------------------------------------------------
 # Test/demo code starts here.
 
-def test_is_source_code_missing_open_brackets():
+def _test_is_source_code_missing_open_brackets():
     """
     Test :func:`is_source_code_missing_open_brackets`.
     """
@@ -1472,7 +1472,7 @@ def test_is_source_code_missing_open_brackets():
     assert is_source_code_missing_open_brackets("a[0]: 'b'}).b()[0]") is True
 
 
-def test_add_indent_lines():
+def _test_add_indent_lines():
     """
     Test :func:`add_indent_lines`.
     """
@@ -1480,7 +1480,7 @@ def test_add_indent_lines():
     assert add_indent_lines("foo ", " bar\n baz") == "foo  bar\n     baz"
 
 
-def test_get_same_indent_prefix():
+def _test_get_same_indent_prefix():
     """
     Test :func:`get_same_indent_prefix`.
     """
@@ -1489,7 +1489,7 @@ def test_get_same_indent_prefix():
     assert get_same_indent_prefix([" a", "  b"]) == " "
 
 
-def test_remove_indent_lines():
+def _test_remove_indent_lines():
     """
     Test :func:`remove_indent_lines`.
     """
@@ -1498,36 +1498,34 @@ def test_remove_indent_lines():
     assert remove_indent_lines("\ta\n\t b") == "a\n b"
 
 
+def _test():
+    for k, v in sorted(globals().items()):
+        if not k.startswith("_test_"):
+            continue
+        print("running: %s()" % k)
+        v()
+    print("ok.")
+    sys.exit()
+
+
+def _debug_shell():
+    debug_shell(locals(), globals())
+    sys.exit()
+
+
+def _debug_shell_exception():
+    try:
+        raise Exception("demo exception")
+    except Exception:
+        better_exchook(*sys.exc_info(), debugshell=True)
+    sys.exit()
+
+
 # noinspection PyMissingOrEmptyDocstring,PyBroadException
-def _main():
+def _demo():
     """
     Some demo.
     """
-
-    if sys.argv[1:] == ["test"]:
-        for k, v in sorted(globals().items()):
-            if not k.startswith("test_"):
-                continue
-            print("running: %s()" % k)
-            v()
-        print("ok.")
-        sys.exit()
-
-    elif sys.argv[1:] == ["debug_shell"]:
-        debug_shell(locals(), globals())
-        sys.exit()
-
-    elif sys.argv[1:] == ["debug_shell_exception"]:
-        try:
-            raise Exception("demo exception")
-        except Exception:
-            better_exchook(*sys.exc_info(), debugshell=True)
-        sys.exit()
-
-    elif sys.argv[1:]:
-        print("Usage: %s (test|...)" % sys.argv[0])
-        sys.exit(1)
-
     # some examples
     # this code produces this output: https://gist.github.com/922622
 
@@ -1584,6 +1582,31 @@ def _main():
     # and fail
     # noinspection PyUnresolvedReferences
     finalfail(sys)
+
+
+def _main():
+    """
+    Main entry point. Either calls the function, or just calls the demo.
+    """
+    from argparse import ArgumentParser
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument("command", default="demo", help="test, debug_shell, demo, ...", nargs="?")
+    args = arg_parser.parse_args()
+    if args.command:
+        install()
+        if "_%s" % args.command in globals():
+            func_name = "_%s" % args.command
+        elif args.command in globals():
+            func_name = args.command
+        else:
+            print("Error: Function (_)%s not found." % args.command)
+            sys.exit(1)
+        print("Run %s()." % func_name)
+        func = globals()[func_name]
+        func()
+        sys.exit()
+    # Just run the demo.
+    _demo()
 
 
 if __name__ == "__main__":
