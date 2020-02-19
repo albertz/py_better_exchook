@@ -404,12 +404,12 @@ def is_source_code_missing_open_brackets(source_code):
     return not all([c == 0 for c in counters])
 
 
-def get_source_code(filename, lineno, module_globals):
+def get_source_code(filename, lineno, module_globals=None):
     """
     :param str filename:
     :param int lineno:
-    :param dict[str] module_globals:
-    :return: source code of that line
+    :param dict[str]|None module_globals:
+    :return: source code of that line (including newline)
     :rtype: str
     """
     import linecache
@@ -1186,20 +1186,60 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
     if file is None:
         file = sys.stderr
 
-    def output(ln):
-        """
-        :param str ln:
-        :return: nothing, prints to ``file``
-        """
-        file.write(ln + "\n")
-
     color = Color(enable=with_color)
+    output = _Output(color=color)
+
+    def format_filename(s):
+        """
+        :param str s:
+        :rtype: str
+        """
+        base = os.path.basename(s)
+        return (
+            color('"' + s[:-len(base)], color.fg_colors[2]) +
+            color(base, color.fg_colors[2], bold=True) +
+            color('"', color.fg_colors[2]))
+
     output(color("EXCEPTION", color.fg_colors[1], bold=True))
     all_locals, all_globals = {}, {}
     if tb is not None:
-        print_tb(tb, allLocals=all_locals, allGlobals=all_globals, file=file, withTitle=True, with_color=color.enable)
+        output.lines.extend(
+            format_tb(
+                tb=tb, allLocals=all_locals, allGlobals=all_globals, withTitle=True, with_color=color.enable))
     else:
         output(color("better_exchook: traceback unknown", color.fg_colors[1]))
+
+    if isinstance(value, SyntaxError):
+        # The standard except hook will also print the source of the SyntaxError,
+        # so do it in a similar way here as well.
+        filename = value.filename
+        # Keep the output somewhat consistent with format_tb.
+        file_descr = "".join([
+            '  ',
+            color("File ", color.fg_colors[0], bold=True), format_filename(filename), ", ",
+            color("line ", color.fg_colors[0]), color("%d" % value.lineno, color.fg_colors[4])])
+        with output.fold_text_ctx(file_descr):
+            if not os.path.isfile(filename):
+                alt_fn = fallback_findfile(filename)
+                if alt_fn:
+                    output(
+                        color("    -- couldn't find file, trying this instead: ", color.fg_colors[0]) +
+                        format_filename(alt_fn))
+                    filename = alt_fn
+            source_code = get_source_code(filename, value.lineno)
+            if source_code:
+                # Similar to remove_indent_lines.
+                # But we need to know the indent-prefix such that we can use the syntax-error offset.
+                source_code = replace_tab_indents(source_code)
+                lines = source_code.splitlines(True)
+                indent_prefix = get_same_indent_prefix(lines)
+                if indent_prefix is None:
+                    indent_prefix = ""
+                source_code = "".join([line[len(indent_prefix):] for line in lines])
+                source_code = source_code.rstrip()
+                prefix = "    line: "
+                output(prefix, color.py_syntax_highlight(source_code), color=color.fg_colors[0])
+                output(" " * (len(prefix) + value.offset - len(indent_prefix) - 1) + "^", color=color.fg_colors[4])
 
     import types
 
@@ -1232,6 +1272,10 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
     else:
         output(_format_final_exc_line(etype.__name__, value))
 
+    for line in output.lines:
+        file.write(line)
+    file.flush()
+
     if autodebugshell:
         # noinspection PyBroadException
         try:
@@ -1241,7 +1285,6 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
     if debugshell:
         output("---------- DEBUG SHELL -----------")
         debug_shell(user_ns=all_locals, user_global_ns=all_globals, traceback=tb)
-    file.flush()
 
 
 def dump_all_thread_tracebacks(exclude_thread_ids=None, file=None):
@@ -1498,6 +1541,58 @@ def _test_remove_indent_lines():
     assert remove_indent_lines("\ta\n\t b") == "a\n b"
 
 
+def _import_dummy_mod_by_path(filename):
+    """
+    :param str filename:
+    """
+    dummy_mod_name = "_dummy_mod_name"
+    if sys.version_info[0] == 2:
+        # noinspection PyDeprecation
+        import imp
+        # noinspection PyDeprecation
+        imp.load_source(dummy_mod_name, filename)
+    else:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(dummy_mod_name, filename)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+
+def _test_syntax_error():
+    """
+    Test :class:`SyntaxError`.
+    """
+    from io import StringIO, BytesIO
+    if sys.version_info[0] == 2:
+        exc_stdout = BytesIO()
+    else:
+        exc_stdout = StringIO()
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py") as f:
+        f.write("[\n\ndef foo():\n  pass\n")
+        f.flush()
+        filename = f.name
+        try:
+            _import_dummy_mod_by_path(filename)
+        except SyntaxError:
+            better_exchook(*sys.exc_info(), file=exc_stdout, autodebugshell=False)
+        else:
+            raise Exception("We expected to get a SyntaxError...")
+    # The standard exception hook prints sth like this:
+    """
+      File "/var/tmp/tmpx9twr8i2.py", line 3
+        def foo():
+          ^
+    SyntaxError: invalid syntax
+    """
+    lines = exc_stdout.getvalue().splitlines()
+    line4, line3, line2, line1 = lines[-4:]
+    assert "SyntaxError" in line1
+    assert "^" in line2
+    assert "line:" in line3 and "foo" in line3
+    assert os.path.basename(filename) in line4
+
+
 def _test():
     for k, v in sorted(globals().items()):
         if not k.startswith("_test_"):
@@ -1510,7 +1605,6 @@ def _test():
 
 def _debug_shell():
     debug_shell(locals(), globals())
-    sys.exit()
 
 
 def _debug_shell_exception():
@@ -1519,7 +1613,6 @@ def _debug_shell_exception():
         raise Exception("demo exception")
     except Exception:
         better_exchook(*sys.exc_info(), debugshell=True)
-    sys.exit()
 
 
 # noinspection PyMissingOrEmptyDocstring,PyBroadException
