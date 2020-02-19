@@ -305,7 +305,7 @@ def debug_shell(user_ns, user_global_ns, traceback=None, execWrapper=None):
 
         except Exception:
             print("IPython Pdb exception:")
-            better_exchook(*sys.exc_info(), autodebugshell=False)
+            better_exchook(*sys.exc_info(), autodebugshell=False, file=sys.stdout)
 
     if not ipshell and have_ipython:
         # noinspection PyBroadException
@@ -327,7 +327,7 @@ def debug_shell(user_ns, user_global_ns, traceback=None, execWrapper=None):
                 user_ns=user_ns, user_module=module)
         except Exception:
             print("IPython not available:")
-            better_exchook(*sys.exc_info(), autodebugshell=False)
+            better_exchook(*sys.exc_info(), autodebugshell=False, file=sys.stdout)
         else:
             if execWrapper:
                 old = ipshell.run_code
@@ -335,7 +335,7 @@ def debug_shell(user_ns, user_global_ns, traceback=None, execWrapper=None):
     if ipshell:
         ipshell()
     else:
-        print("Use simple debug shell:")
+        print("Use simple pdb debug shell:")
         if traceback:
             import pdb
             pdb.post_mortem(traceback)
@@ -1179,8 +1179,8 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
     :param tb: traceback
     :param bool debugshell: spawn a debug shell at the context of the exception
     :param bool autodebugshell: if env DEBUG is an integer != 0, it will spawn a debug shell
-    :param io.TextIOBase|io.StringIO file: output stream where we will print the traceback and exception information.
-        stderr by default.
+    :param io.TextIOBase|io.StringIO|typing.TextIO file: output stream where we will print the traceback
+        and exception information. stderr by default.
     :param bool|None with_color: whether to use ANSI escape codes for colored output
     """
     if file is None:
