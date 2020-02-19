@@ -115,7 +115,7 @@ def parse_py_statement(line):
             if c in spaces:
                 pass
             elif c in ops:
-                yield ("op", c)
+                yield "op", c
             elif c == "#":
                 state = 6
             elif c == "\"":
@@ -129,7 +129,7 @@ def parse_py_statement(line):
             if c == "\\":
                 state = 4
             elif c == "\"":
-                yield ("str", cur_token)
+                yield "str", cur_token
                 cur_token = ""
                 state = 0
             else:
@@ -138,14 +138,14 @@ def parse_py_statement(line):
             if c == "\\":
                 state = 5
             elif c == "'":
-                yield ("str", cur_token)
+                yield "str", cur_token
                 cur_token = ""
                 state = 0
             else:
                 cur_token += c
         elif state == 3:  # identifier
             if c in spaces + ops + "#\"'":
-                yield ("id", cur_token)
+                yield "id", cur_token
                 cur_token = ""
                 state = 0
                 i -= 1
@@ -160,9 +160,9 @@ def parse_py_statement(line):
         elif state == 6:  # comment
             cur_token += c
     if state == 3:
-        yield ("id", cur_token)
+        yield "id", cur_token
     elif state == 6:
-        yield ("comment", cur_token)
+        yield "comment", cur_token
 
 
 def parse_py_statements(source_code):
@@ -448,7 +448,7 @@ def add_indent_lines(prefix, s):
         return prefix
     prefix_len = str_visible_len(prefix)
     lines = s.splitlines(True)
-    return "".join([prefix + lines[0]] + [" " * prefix_len + l for l in lines[1:]])
+    return "".join([prefix + lines[0]] + [" " * prefix_len + line for line in lines[1:]])
 
 
 def get_indent_prefix(s):
@@ -470,7 +470,7 @@ def get_same_indent_prefix(lines):
     prefix = get_indent_prefix(lines[0])
     if not prefix:
         return ""
-    if all([l.startswith(prefix) for l in lines]):
+    if all([line.startswith(prefix) for line in lines]):
         return prefix
     return None
 
@@ -486,8 +486,8 @@ def remove_indent_lines(s):
     lines = s.splitlines(True)
     prefix = get_same_indent_prefix(lines)
     if prefix is None:  # not in expected format. just lstrip all lines
-        return "".join([l.lstrip() for l in lines])
-    return "".join([l[len(prefix):] for l in lines])
+        return "".join([line.lstrip() for line in lines])
+    return "".join([line[len(prefix):] for line in lines])
 
 
 def replace_tab_indent(s, replace="    "):
@@ -507,7 +507,7 @@ def replace_tab_indents(s, replace="    "):
     :rtype: str
     """
     lines = s.splitlines(True)
-    return "".join([replace_tab_indent(l, replace) for l in lines])
+    return "".join([replace_tab_indent(line, replace) for line in lines])
 
 
 def to_bool(s, fallback=None):
@@ -1151,8 +1151,8 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
     except Exception:
         output(color("ERROR: cannot get more detailed exception info because:", color.fg_colors[1], bold=True))
         import traceback
-        for l in traceback.format_exc().split("\n"):
-            output("   " + l)
+        for line in traceback.format_exc().split("\n"):
+            output("   " + line)
 
     return output.lines
 
@@ -1165,8 +1165,8 @@ def print_tb(tb, file=None, **kwargs):
     """
     if file is None:
         file = sys.stderr
-    for l in format_tb(tb=tb, **kwargs):
-        file.write(l)
+    for line in format_tb(tb=tb, **kwargs):
+        file.write(line)
     file.flush()
 
 
@@ -1514,6 +1514,7 @@ def _debug_shell():
 
 
 def _debug_shell_exception():
+    # noinspection PyBroadException
     try:
         raise Exception("demo exception")
     except Exception:
