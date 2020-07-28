@@ -168,6 +168,7 @@ Similar projects
 * Ka-Ping Yee's "cgitb.py", which is part of Python,
   `see here <https://docs.python.org/3/library/cgitb.html>`__,
   `code here <https://github.com/python/cpython/blob/3.7/Lib/cgitb.py>`__.
+* [Rich Python library](https://github.com/willmcgugan/rich#tracebacks). Syntax highlighting but without locals.
 * See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`__
   related StackOverflow question.
 
