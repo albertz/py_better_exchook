@@ -163,12 +163,21 @@ Similar projects
 
 * `<https://github.com/patrys/great-justice>`_
 * `Nose does something similar for assertion failures <http://nose.readthedocs.io/en/latest/plugins/failuredetail.html>`_.
-* IPython has something similar (`this <https://github.com/ipython/ipython/blob/master/IPython/core/ultratb.py>`__).
+* IPython has something similar (`ultratb <https://github.com/ipython/ipython/blob/master/IPython/core/ultratb.py>`__).
   Do this: ``from IPython.core import ultratb; sys.excepthook = ultratb.VerboseTB()``.
+  Shows more source code context (but not necessarily all relevant parts).
 * Ka-Ping Yee's "cgitb.py", which is part of Python,
   `see here <https://docs.python.org/3/library/cgitb.html>`__,
   `code here <https://github.com/python/cpython/blob/3.7/Lib/cgitb.py>`__.
-* `Rich Python library <https://github.com/willmcgugan/rich#tracebacks>`__. Syntax highlighting but without locals.
+* `Rich Python library <https://github.com/willmcgugan/rich#tracebacks>`__.
+  Syntax highlighting but without locals.
+* `andy-landy / traceback_with_variables <https://github.com/andy-landy/traceback_with_variables>`__.
+  Python Traceback (Error Message) Printing Variables.
+  Very similar, but less advanced.
+  Only shows locals, not globals, and also just all locals, not only those used in current statement.
+  Also does not expand statement if it goes over multiple lines.
+* `cknd / stackprinter <https://github.com/cknd/stackprinter>`__.
+  Similar as IPython ultratb.
 * See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`__
   related StackOverflow question.
 
