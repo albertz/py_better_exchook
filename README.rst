@@ -10,7 +10,10 @@ Also see `Python source and comments <https://github.com/albertz/py_better_excho
 
 Features
 --------
-* Multi-line Python statements in the stack trace output.
+* Shows locals/globals per frame, but only those used in the current statement.
+  It does this by a simple Python code parser.
+* Multi-line Python statements in the stack trace output,
+  in case the statement goes over multiple lines.
 * Colored/formated output of each frame.
 * Syntax highlighting for the Python source code.
 * Support for `DomTerm <https://github.com/PerBothner/DomTerm>`__,
