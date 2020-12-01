@@ -161,7 +161,6 @@ Screencast with `DomTerm <http://domterm.org>`__:
 Similar projects
 ----------------
 
-* `<https://github.com/patrys/great-justice>`_
 * `Nose does something similar for assertion failures <http://nose.readthedocs.io/en/latest/plugins/failuredetail.html>`_.
 * IPython has something similar (`ultratb <https://github.com/ipython/ipython/blob/master/IPython/core/ultratb.py>`__).
   Do this: ``from IPython.core import ultratb; sys.excepthook = ultratb.VerboseTB()``.
@@ -178,6 +177,7 @@ Similar projects
   Also does not expand statement if it goes over multiple lines.
 * `cknd / stackprinter <https://github.com/cknd/stackprinter>`__.
   Similar as IPython ultratb.
+* `patrys / great-justice <https://github.com/patrys/great-justice>`_
 * See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`__
   related StackOverflow question.
 
