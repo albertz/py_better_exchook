@@ -90,6 +90,13 @@ except NameError:  # Python3
 
 def parse_py_statement(line):
     """
+    Parse Python statement into tokens.
+    Note that this is incomplete.
+    It should be simple and fast and just barely enough for what we need here.
+
+    Reference:
+    https://docs.python.org/3/reference/lexical_analysis.html
+
     :param str line:
     :return: yields (type, value)
     :rtype: typing.Iterator[typing.Tuple[str,str]]
@@ -118,7 +125,7 @@ def parse_py_statement(line):
                 yield "op", c
             elif c == "#":
                 state = 6
-            elif c == "\"":
+            elif c == '"':
                 state = 1
             elif c == "'":
                 state = 2
@@ -144,11 +151,17 @@ def parse_py_statement(line):
             else:
                 cur_token += c
         elif state == 3:  # identifier
-            if c in spaces + ops + "#\"'":
+            if c in spaces + ops + "#":
                 yield "id", cur_token
                 cur_token = ""
                 state = 0
                 i -= 1
+            elif c == '"':  # identifier is string prefix
+                cur_token = ""
+                state = 1
+            elif c == "'":  # identifier is string prefix
+                cur_token = ""
+                state = 2
             else:
                 cur_token += c
         elif state == 4:  # escape in "
@@ -1641,6 +1654,13 @@ def _test_get_source_code_multi_line():
 
     src = get_source_code(filename=dummy_fn, lineno=1)
     assert src == source_code
+
+
+def _test_parse_py_statement_prefixed_str():
+    # Our parser just ignores the prefix. But that is fine.
+    code = "b'f(1,'"
+    statements = (list(parse_py_statement(code)))
+    assert statements == [("str", "f(1,")]
 
 
 def _test():
