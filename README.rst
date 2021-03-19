@@ -14,6 +14,7 @@ Features
   It does this by a simple Python code parser.
 * Multi-line Python statements in the stack trace output,
   in case the statement goes over multiple lines.
+* Shows full function qualified name (not just ``co_name``).
 * Colored/formatted output of each frame.
 * Syntax highlighting for the Python source code.
 * Support for `DomTerm <https://github.com/PerBothner/DomTerm>`__,
