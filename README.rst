@@ -14,7 +14,7 @@ Features
   It does this by a simple Python code parser.
 * Multi-line Python statements in the stack trace output,
   in case the statement goes over multiple lines.
-* Colored/formated output of each frame.
+* Colored/formatted output of each frame.
 * Syntax highlighting for the Python source code.
 * Support for `DomTerm <https://github.com/PerBothner/DomTerm>`__,
   where it folds all the details of each stack frame away by default,
@@ -129,7 +129,7 @@ Output:
         x = <local> {'a': 'b', 1: 2}
         __name__ = <local> '__main__', len = 8
   TypeError: <lambda>() takes exactly 1 argument (2 given)
-  
+
 Python example code:
 
 .. code:: python
