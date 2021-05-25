@@ -32,5 +32,4 @@ jobs:
 
     - name: Run test
       run: |
-        export ${{ matrix.action }}
         python test.py
