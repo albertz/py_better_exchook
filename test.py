@@ -1,7 +1,14 @@
-
 from argparse import ArgumentParser
+import tempfile
 from better_exchook import *
+import sys
 
+PY2 = sys.version_info[0] == 2
+
+if PY2:
+    from io import BytesIO as StringIO
+else:
+    from io import StringIO
 
 _IsGithubEnv = os.environ.get("GITHUB_ACTIONS") == "true"
 
@@ -72,26 +79,39 @@ def _import_dummy_mod_by_path(filename):
         spec.loader.exec_module(mod)  # noqa
 
 
-def test_syntax_error():
+def _run_code_format_exc(txt, expected_exception, except_hook=better_exchook):
     """
-    Test :class:`SyntaxError`.
+    :param str txt:
+    :param type[Exception] expected_exception: exception class
+    :return: stdout of better_exchook
+    :rtype: str
     """
-    from io import StringIO, BytesIO
-    if sys.version_info[0] == 2:
-        exc_stdout = BytesIO()
-    else:
-        exc_stdout = StringIO()
-    import tempfile
+    exc_stdout = StringIO()
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py") as f:
-        f.write("[\n\ndef foo():\n  pass\n")
+        f.write(txt)
         f.flush()
         filename = f.name
         try:
             _import_dummy_mod_by_path(filename)
-        except SyntaxError:
-            better_exchook(*sys.exc_info(), file=exc_stdout, autodebugshell=False)
+        except expected_exception:
+            except_hook(*sys.exc_info(), file=exc_stdout)
+        except Exception:  # some other exception
+            # Note: Any exception which falls through would miss the source code
+            # in the exception handler output because the file got deleted.
+            # So handle it now.
+            sys.excepthook(*sys.exc_info())
+            print("-" * 40)
+            raise Exception("Got unexpected exception.")
         else:
-            raise Exception("We expected to get a SyntaxError...")
+            raise Exception("We expected to get a %s..." % expected_exception.__name__)
+    return exc_stdout.getvalue()
+
+
+def test_syntax_error():
+    """
+    Test :class:`SyntaxError`.
+    """
+    exc_stdout = _run_code_format_exc("[\n\ndef foo():\n  pass\n", expected_exception=SyntaxError)
     # The standard exception hook prints sth like this:
     """
       File "/var/tmp/tmpx9twr8i2.py", line 3
@@ -99,12 +119,12 @@ def test_syntax_error():
           ^
     SyntaxError: invalid syntax
     """
-    lines = exc_stdout.getvalue().splitlines()
+    lines = exc_stdout.splitlines()
     line4, line3, line2, line1 = lines[-4:]
     assert "SyntaxError" in line1
     assert "^" in line2
     assert "line:" in line3 and "foo" in line3
-    assert os.path.basename(filename) in line4
+    assert ".py" in line4
 
 
 def test_get_source_code_multi_line():
@@ -127,6 +147,33 @@ def test_parse_py_statement_prefixed_str():
     assert statements == [("str", "f(1,")]
 
 
+def test_exception_chaining():
+    if PY2:
+        return  # not supported in Python 2
+    exc_stdout = _run_code_format_exc("""
+try:
+    {}['a']
+except KeyError as exc:
+    raise ValueError('failed') from exc
+""", ValueError)
+    assert "The above exception was the direct cause of the following exception" in exc_stdout
+    assert "KeyError" in exc_stdout
+    assert "ValueError" in exc_stdout
+
+
+def test_exception_chaining_implicit():
+    exc_stdout = _run_code_format_exc("""
+try:
+    {}['a']
+except KeyError:
+    raise ValueError('failed')
+""", ValueError)
+    if not PY2:  # Python 2 does not support this
+        assert "During handling of the above exception, another exception occurred" in exc_stdout
+        assert "KeyError" in exc_stdout
+    assert "ValueError" in exc_stdout
+
+
 def test():
     for k, v in sorted(globals().items()):
         if not k.startswith("test_"):
@@ -147,7 +194,6 @@ def main():
     arg_parser.add_argument("command", default=None, help="test, ...", nargs="?")
     args = arg_parser.parse_args()
     if args.command:
-        install()
         if "test_%s" % args.command in globals():
             func_name = "test_%s" % args.command
         elif args.command in globals():

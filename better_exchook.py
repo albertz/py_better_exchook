@@ -1223,7 +1223,9 @@ def print_tb(tb, file=None, **kwargs):
     file.flush()
 
 
-def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file=None, with_color=None):
+def better_exchook(etype, value, tb,
+                   debugshell=False, autodebugshell=True,
+                   file=None, with_color=None, with_preamble=True):
     """
     Replacement for sys.excepthook.
 
@@ -1235,12 +1237,25 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
     :param io.TextIOBase|io.StringIO|typing.TextIO|None file: output stream where we will print the traceback
         and exception information. stderr by default.
     :param bool|None with_color: whether to use ANSI escape codes for colored output
+    :param bool with_preamble: print a short preamble for the exception
     """
     if file is None:
         file = sys.stderr
 
     color = Color(enable=with_color)
     output = _Output(color=color)
+
+    rec_args = dict(autodebugshell=False, file=file, with_color=with_color, with_preamble=with_preamble)
+    if getattr(value, "__cause__", None):
+        better_exchook(type(value.__cause__), value.__cause__, value.__cause__.__traceback__, **rec_args)
+        output("")
+        output("The above exception was the direct cause of the following exception:")
+        output("")
+    elif getattr(value, "__context__", None):
+        better_exchook(type(value.__context__), value.__context__, value.__context__.__traceback__, **rec_args)
+        output("")
+        output("During handling of the above exception, another exception occurred:")
+        output("")
 
     def format_filename(s):
         """
@@ -1253,7 +1268,8 @@ def better_exchook(etype, value, tb, debugshell=False, autodebugshell=True, file
             color(base, color.fg_colors[2], bold=True) +
             color('"', color.fg_colors[2]))
 
-    output(color("EXCEPTION", color.fg_colors[1], bold=True))
+    if with_preamble:
+        output(color("EXCEPTION", color.fg_colors[1], bold=True))
     all_locals, all_globals = {}, {}
     if tb is not None:
         output.lines.extend(
