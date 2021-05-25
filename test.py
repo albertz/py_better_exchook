@@ -3,6 +3,19 @@ from argparse import ArgumentParser
 from better_exchook import *
 
 
+_IsGithubEnv = os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def _fold_open(txt):
+    if _IsGithubEnv:
+        print("::group::%s" % txt)
+
+
+def _fold_close():
+    if _IsGithubEnv:
+        print("::endgroup::")
+
+
 def test_is_source_code_missing_open_brackets():
     """
     Test :func:`is_source_code_missing_open_brackets`.
@@ -118,9 +131,12 @@ def test():
     for k, v in sorted(globals().items()):
         if not k.startswith("test_"):
             continue
+        _fold_open(k)
         print("running: %s()" % k)
         v()
-    print("ok.")
+        _fold_close()
+
+    print("All ok.")
 
 
 def main():
