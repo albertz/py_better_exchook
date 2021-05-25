@@ -80,9 +80,8 @@ def _debug_shell_exception():
 
 
 def main():
-    install()
     arg_parser = ArgumentParser()
-    arg_parser.add_argument("command", default="demo", help="demo, debug_shell, ...", nargs="?")
+    arg_parser.add_argument("command", help="demo, debug_shell, ...", nargs="?")
     args = arg_parser.parse_args()
     if args.command:
         if "_%s" % args.command in globals():

@@ -116,7 +116,7 @@ def test_parse_py_statement_prefixed_str():
 
 def test():
     for k, v in sorted(globals().items()):
-        if not k.startswith("_test_"):
+        if not k.startswith("test_"):
             continue
         print("running: %s()" % k)
         v()
@@ -128,7 +128,7 @@ def main():
     Main entry point. Either calls the function, or just calls the demo.
     """
     arg_parser = ArgumentParser()
-    arg_parser.add_argument("command", default="demo", help="test, debug_shell, demo, ...", nargs="?")
+    arg_parser.add_argument("command", default=None, help="test, ...", nargs="?")
     args = arg_parser.parse_args()
     if args.command:
         install()
