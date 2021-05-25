@@ -22,6 +22,9 @@ Features
   and thus provides a much more comprehensive overview,
   while still providing all the details when needed.
 
+.. image:: https://github.com/albertz/py_better_exchook/workflows/CI/badge.svg
+    :target: https://github.com/albertz/py_better_exchook/actions
+
 
 Installation
 ------------
