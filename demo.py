@@ -1,4 +1,3 @@
-
 import sys
 from argparse import ArgumentParser
 from better_exchook import better_exchook, install, debug_shell
@@ -20,23 +19,23 @@ def demo():
             y = "foo"
             # noinspection PyUnresolvedReferences,PyStatementEffect
             x, 42, sys.stdin.__class__, sys.exc_info, y, z
+
         f()
     except Exception:
         better_exchook(*sys.exc_info())
 
     try:
         # noinspection PyArgumentList
-        (lambda _x: None)(__name__,
-                          42)  # multiline
+        (lambda _x: None)(__name__, 42)  # multiline
     except Exception:
         better_exchook(*sys.exc_info())
 
     try:
+
         class Obj:
             def __repr__(self):
-                return (
-                    "<Obj multi-\n" +
-                    "     line repr>")
+                return "<Obj multi-\n" + "     line repr>"
+
         obj = Obj()
         assert not obj
     except Exception:

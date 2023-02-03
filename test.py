@@ -70,10 +70,12 @@ def _import_dummy_mod_by_path(filename):
     if sys.version_info[0] == 2:
         # noinspection PyDeprecation
         import imp
+
         # noinspection PyDeprecation
         imp.load_source(dummy_mod_name, filename)
     else:
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(dummy_mod_name, filename)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # noqa
@@ -143,31 +145,37 @@ def test_get_source_code_multi_line():
 def test_parse_py_statement_prefixed_str():
     # Our parser just ignores the prefix. But that is fine.
     code = "b'f(1,'"
-    statements = (list(parse_py_statement(code)))
+    statements = list(parse_py_statement(code))
     assert statements == [("str", "f(1,")]
 
 
 def test_exception_chaining():
     if PY2:
         return  # not supported in Python 2
-    exc_stdout = _run_code_format_exc("""
+    exc_stdout = _run_code_format_exc(
+        """
 try:
     {}['a']
 except KeyError as exc:
     raise ValueError('failed') from exc
-""", ValueError)
+""",
+        ValueError,
+    )
     assert "The above exception was the direct cause of the following exception" in exc_stdout
     assert "KeyError" in exc_stdout
     assert "ValueError" in exc_stdout
 
 
 def test_exception_chaining_implicit():
-    exc_stdout = _run_code_format_exc("""
+    exc_stdout = _run_code_format_exc(
+        """
 try:
     {}['a']
 except KeyError:
     raise ValueError('failed')
-""", ValueError)
+""",
+        ValueError,
+    )
     if not PY2:  # Python 2 does not support this
         assert "During handling of the above exception, another exception occurred" in exc_stdout
         assert "KeyError" in exc_stdout

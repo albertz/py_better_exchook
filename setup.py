@@ -1,5 +1,3 @@
-
-
 """
 Usage:
 
@@ -118,29 +116,28 @@ if os.environ.get("DEBUG", "") == "1":
 
 
 setup(
-    name='better_exchook',
+    name="better_exchook",
     version=version,
-    packages=['better_exchook'],
-    package_dir={'better_exchook': ''},
-    description='nice Python exception hook replacement',
-    author='Albert Zeyer',
-    author_email='albzey@gmail.com',
-    url='https://github.com/albertz/py_better_exchook',
-    license='2-clause BSD license',
-    long_description=open('README.rst').read(),
+    packages=["better_exchook"],
+    package_dir={"better_exchook": ""},
+    description="nice Python exception hook replacement",
+    author="Albert Zeyer",
+    author_email="albzey@gmail.com",
+    url="https://github.com/albertz/py_better_exchook",
+    license="2-clause BSD license",
+    long_description=open("README.rst").read(),
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Education',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX',
-        'Operating System :: Unix',
-        'Programming Language :: Python',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ]
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX",
+        "Operating System :: Unix",
+        "Programming Language :: Python",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
 )
-
