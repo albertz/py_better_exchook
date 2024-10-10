@@ -1757,3 +1757,34 @@ def replace_traceback_format_tb():
     if hasattr(traceback, "StackSummary"):
         traceback.StackSummary.format = format_tb
         traceback.StackSummary.extract = _StackSummary_extract
+
+
+def replace_traceback_print_tb():
+    """
+    Replaces these functions from the traceback module by our own:
+
+    - traceback.print_tb
+    - traceback.print_exception
+    - traceback.print_exc
+
+    Note that this kind of monkey patching might not be safe under all circumstances
+    and is not officially supported by Python.
+    """
+    import traceback
+
+    traceback.print_tb = print_tb
+    traceback.print_exception = print_exception
+    traceback.print_exc = print_exc
+
+
+def setup_all():
+    """
+    Calls:
+
+    - :func:`install`
+    - :func:`replace_traceback_format_tb`
+    - :func:`replace_traceback_print_tb`
+    """
+    install()
+    replace_traceback_format_tb()
+    replace_traceback_print_tb()
