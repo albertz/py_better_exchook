@@ -1258,6 +1258,8 @@ def format_tb(tb=None, limit=None, allLocals=None, allGlobals=None, withTitle=Fa
 
 def print_tb(tb, file=None, **kwargs):
     """
+    Replacement for traceback.print_tb.
+
     :param types.TracebackType|types.FrameType|StackSummary tb:
     :param io.TextIOBase|io.StringIO|typing.TextIO|None file: stderr by default
     :return: nothing, prints to ``file``
