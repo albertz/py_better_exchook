@@ -1269,8 +1269,43 @@ def print_tb(tb, file=None, **kwargs):
     file.flush()
 
 
+def print_exception(etype, value, tb, limit=None, file=None, chain=True):
+    """
+    Replacement for traceback.print_exception.
+
+    :param etype: exception type
+    :param value: exception value
+    :param tb: traceback
+    :param int|None limit:
+    :param io.TextIOBase|io.StringIO|typing.TextIO|None file: stderr by default
+    :param bool chain: whether to print the chain of exceptions
+    """
+    better_exchook(etype, value, tb, autodebugshell=False, file=file, limit=limit, chain=chain)
+
+
+def print_exc(limit=None, file=None, chain=True):
+    """
+    Replacement for traceback.print_exc.
+    Shorthand for 'print_exception(*sys.exc_info(), limit, file)'.
+
+    :param int|None limit:
+    :param io.TextIOBase|io.StringIO|typing.TextIO|None file: stderr by default
+    :param bool chain:
+    """
+    print_exception(*sys.exc_info(), limit=limit, file=file, chain=chain)
+
+
 def better_exchook(
-    etype, value, tb, debugshell=False, autodebugshell=True, file=None, with_color=None, with_preamble=True
+    etype,
+    value,
+    tb,
+    debugshell=False,
+    autodebugshell=True,
+    file=None,
+    with_color=None,
+    with_preamble=True,
+    limit=None,
+    chain=True,
 ):
     """
     Replacement for sys.excepthook.
@@ -1284,6 +1319,8 @@ def better_exchook(
         and exception information. stderr by default.
     :param bool|None with_color: whether to use ANSI escape codes for colored output
     :param bool with_preamble: print a short preamble for the exception
+    :param int|None limit:
+    :param bool chain: whether to print the chain of exceptions
     """
     if file is None:
         file = sys.stderr
@@ -1292,16 +1329,17 @@ def better_exchook(
     output = _OutputLinesCollector(color=color)
 
     rec_args = dict(autodebugshell=False, file=file, with_color=with_color, with_preamble=with_preamble)
-    if getattr(value, "__cause__", None):
-        better_exchook(type(value.__cause__), value.__cause__, value.__cause__.__traceback__, **rec_args)
-        output("")
-        output("The above exception was the direct cause of the following exception:")
-        output("")
-    elif getattr(value, "__context__", None):
-        better_exchook(type(value.__context__), value.__context__, value.__context__.__traceback__, **rec_args)
-        output("")
-        output("During handling of the above exception, another exception occurred:")
-        output("")
+    if chain:
+        if getattr(value, "__cause__", None):
+            better_exchook(type(value.__cause__), value.__cause__, value.__cause__.__traceback__, **rec_args)
+            output("")
+            output("The above exception was the direct cause of the following exception:")
+            output("")
+        elif getattr(value, "__context__", None):
+            better_exchook(type(value.__context__), value.__context__, value.__context__.__traceback__, **rec_args)
+            output("")
+            output("During handling of the above exception, another exception occurred:")
+            output("")
 
     def format_filename(s):
         """
@@ -1320,7 +1358,14 @@ def better_exchook(
     all_locals, all_globals = {}, {}
     if tb is not None:
         output.lines.extend(
-            format_tb(tb=tb, allLocals=all_locals, allGlobals=all_globals, withTitle=True, with_color=color.enable)
+            format_tb(
+                tb=tb,
+                limit=limit,
+                allLocals=all_locals,
+                allGlobals=all_globals,
+                withTitle=True,
+                with_color=color.enable,
+            )
         )
     else:
         output(color("better_exchook: traceback unknown", color.fg_colors[1]))
