@@ -122,11 +122,24 @@ def test_syntax_error():
     SyntaxError: invalid syntax
     """
     lines = exc_stdout.splitlines()
-    line4, line3, line2, line1 = lines[-4:]
-    assert "SyntaxError" in line1
-    assert "^" in line2
-    assert "line:" in line3 and "foo" in line3
-    assert ".py" in line4
+    assert "SyntaxError" in lines[-1]
+    assert "^" in lines[-2]
+    pos = 0
+    while lines[-2][pos] == " ":
+        pos += 1
+    del lines[-2:]
+    have_foo = False
+    while lines:
+        line = lines[-1]
+        del lines[-1]
+        if "foo" in line:
+            have_foo = True
+        if line.startswith(" " * pos):
+            continue
+        assert "line:" in line, "prefix %r, line %r, got:\n%s" % (" " * pos, line, exc_stdout)
+        break
+    assert have_foo
+    assert ".py" in lines[-1]
 
 
 def test_get_source_code_multi_line():
@@ -198,6 +211,7 @@ def main():
     """
     Main entry point. Either calls the function, or just calls the demo.
     """
+    install()
     arg_parser = ArgumentParser()
     arg_parser.add_argument("command", default=None, help="test, ...", nargs="?")
     args = arg_parser.parse_args()
