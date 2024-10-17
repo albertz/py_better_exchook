@@ -55,17 +55,17 @@ Or:
   better_exchook.setup_all()
 
 * **setup_all**
-  * ``install`` + ``replace_traceback_format_tb`` + ``replace_traceback_print_tb``
+    - ``install`` + ``replace_traceback_format_tb`` + ``replace_traceback_print_tb``
 * **install**:
-  * ``sys.excepthook = better_exchook``
+    - ``sys.excepthook = better_exchook``
 * **replace_traceback_format_tb**:
-  * ``traceback.format_tb = format_tb``
-  * ``traceback.StackSummary.format = format_tb``
-  * ``traceback.StackSummary.extract = _StackSummary_extract``
+    - ``traceback.format_tb = format_tb``
+    - ``traceback.StackSummary.format = format_tb``
+    - ``traceback.StackSummary.extract = _StackSummary_extract``
 * **replace_traceback_print_tb**:
-  * ``traceback.print_tb = print_tb``
-  * ``traceback.print_exception = print_exception``
-  * ``traceback.print_exc = print_exc``
+    - ``traceback.print_tb = print_tb``
+    - ``traceback.print_exception = print_exception``
+    - ``traceback.print_exc = print_exc``
 
 
 Examples
