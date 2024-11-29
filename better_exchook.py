@@ -326,7 +326,7 @@ def debug_shell(user_ns, user_global_ns, traceback=None, execWrapper=None):
                 """
                 Run the IPython shell.
                 """
-                pdb_obj.interaction(None, traceback=traceback)
+                pdb_obj.interaction(None, traceback)
 
         except Exception:
             print("IPython Pdb exception:")
