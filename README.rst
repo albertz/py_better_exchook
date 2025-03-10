@@ -17,7 +17,8 @@ Features
 * Shows full function qualified name (not just ``co_name``).
 * Colored/formatted output of each frame.
 * Syntax highlighting for the Python source code.
-* Support for `DomTerm <https://github.com/PerBothner/DomTerm>`__,
+* Support for `DomTerm <https://github.com/PerBothner/DomTerm>`__ text folding
+  (`see more <https://stackoverflow.com/a/54019993/133374>`__),
   where it folds all the details of each stack frame away by default,
   and thus provides a much more comprehensive overview,
   while still providing all the details when needed.
@@ -180,7 +181,9 @@ Screenshot:
 
 .. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screenshot1.png
 
-Screencast with `DomTerm <http://domterm.org>`__:
+.. _domterm:
+
+Screencast with `DomTerm <http://domterm.org>`__ using text folding (`see more <https://stackoverflow.com/a/54019993/133374>`__):
 
 .. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screencast-domterm.gif
 
