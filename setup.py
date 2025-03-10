@@ -59,6 +59,8 @@ def parse_pkg_info(fn):
     for ln in open(fn).read().splitlines():
         if not ln or not ln[:1].strip():
             continue
+        if ": " not in ln:
+            continue
         key, value = ln.split(": ", 1)
         res[key] = value
     return res
