@@ -17,16 +17,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.13
 
-    - run: python3 setup.py sdist
+    - name: Install Python deps
+      run: |
+        echo "PATH=$PATH:$HOME/.local/bin" >> $GITHUB_ENV
+        pip3 install --user --upgrade pip build twine
+
+    - run: python3 -m build
 
     # https://github.com/marketplace/actions/pypi-publish
     - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@master
+      # https://github.com/pypa/gh-action-pypi-publish/issues/112
+      uses: pypa/gh-action-pypi-publish@release/v1.4
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
