@@ -200,7 +200,7 @@ def test_pickle_extracted_stack():
     import traceback
     from better_exchook import _StackSummary_extract
 
-    # extract_stack / traceback.extract_tb():
+    # traceback.extract_stack():
     # noinspection PyUnresolvedReferences
     f = sys._getframe()
     stack = _StackSummary_extract(traceback.walk_stack(f))
@@ -217,6 +217,22 @@ def test_pickle_extracted_stack():
     )
     # We ignore the extended frame summary when serializing it.
     assert type(stack2[0]) is traceback.FrameSummary
+
+
+def test_extracted_stack_format_len():
+    from better_exchook import _StackSummary_extract
+    import traceback
+
+    # traceback.extract_stack():
+    # noinspection PyUnresolvedReferences
+    f = sys._getframe()
+    stack = _StackSummary_extract(traceback.walk_stack(f))
+    stack_strs = format_tb(stack)
+    for i, s in enumerate(stack_strs):
+        print("entry %i:" % i)
+        print(s, end="")
+    assert len(stack) == len(stack_strs) >= 1
+    print("All ok.")
 
 
 def test():
