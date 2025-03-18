@@ -195,6 +195,30 @@ except KeyError:
     assert "ValueError" in exc_stdout
 
 
+def test_pickle_extracted_stack():
+    import pickle
+    import traceback
+    from better_exchook import _StackSummary_extract
+
+    # extract_stack / traceback.extract_tb():
+    # noinspection PyUnresolvedReferences
+    f = sys._getframe()
+    stack = _StackSummary_extract(traceback.walk_stack(f))
+    assert (
+        isinstance(stack, traceback.StackSummary) and len(stack) >= 1 and isinstance(stack[0], traceback.FrameSummary)
+    )
+    assert type(stack[0]) is ExtendedFrameSummary
+    s = pickle.dumps(stack)
+    stack2 = pickle.loads(s)
+    assert (
+        isinstance(stack2, traceback.StackSummary)
+        and len(stack2) == len(stack)
+        and isinstance(stack2[0], traceback.FrameSummary)
+    )
+    # We ignore the extended frame summary when serializing it.
+    assert type(stack2[0]) is traceback.FrameSummary
+
+
 def test():
     for k, v in sorted(globals().items()):
         if not k.startswith("test_"):
