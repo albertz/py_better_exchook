@@ -99,13 +99,13 @@ def _run_code_format_exc(txt, expected_exception, except_hook=better_exchook.bet
             _import_dummy_mod_by_path(filename)
         except expected_exception:
             except_hook(*sys.exc_info(), file=exc_stdout)
-        except Exception:  # some other exception
+        except Exception as exc:  # some other exception
             # Note: Any exception which falls through would miss the source code
             # in the exception handler output because the file got deleted.
             # So handle it now.
             sys.excepthook(*sys.exc_info())
             print("-" * 40)
-            raise Exception("Got unexpected exception.")
+            raise Exception("Got unexpected exception: %s: %s" % (type(exc).__name__, exc))
         else:
             raise Exception("We expected to get a %s..." % expected_exception.__name__)
     return exc_stdout.getvalue()
