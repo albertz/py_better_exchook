@@ -245,12 +245,12 @@ def test_exception_chaining():
 
 def test_exception_chaining_implicit():
     exc_stdout = _run_code_format_exc(
-        """
-try:
-    {}['a']
-except KeyError:
-    raise ValueError('failed')
-""",
+        textwrap.dedent("""\
+            try:
+                {}['a']
+            except KeyError:
+                raise ValueError('failed')
+            """),
         ValueError,
     )
     if not PY2:  # Python 2 does not support this
