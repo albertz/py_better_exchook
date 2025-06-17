@@ -257,7 +257,7 @@ def simple_debug_shell(globals, locals):
         try:
             s = raw_input("> ")
         except (KeyboardInterrupt, EOFError):
-            print("breaked debug shell: " + sys.exc_info()[0].__name__)
+            print("broke debug shell: " + sys.exc_info()[0].__name__)
             break
         if s.strip() == "":
             continue
