@@ -238,6 +238,7 @@ def set_linecache(filename, source):
     """
     import linecache
 
+    # noinspection PyTypeChecker
     linecache.cache[filename] = None, None, [line + "\n" for line in source.splitlines()], filename
 
 
@@ -249,7 +250,7 @@ def simple_debug_shell(globals, locals):
     :return: nothing
     """
     try:
-        import readline
+        import readline  # noqa: F401
     except ImportError:
         pass  # ignore
     compile_string_fn = "<simple_debug_shell input>"
@@ -258,6 +259,7 @@ def simple_debug_shell(globals, locals):
             s = raw_input("> ")
         except (KeyboardInterrupt, EOFError):
             print("broke debug shell: " + sys.exc_info()[0].__name__)
+            s = None
             break
         if s.strip() == "":
             continue
@@ -1173,10 +1175,11 @@ def format_tb(
             if isframe(_tb):
                 f = _tb
             elif is_stack_summary(_tb):
-                if isinstance(_tb[0], ExtendedFrameSummary):
-                    f = _tb[0].tb_frame
+                _tb0 = _tb[0]
+                if isinstance(_tb0, ExtendedFrameSummary):
+                    f = _tb0.tb_frame
                 else:
-                    f = DummyFrame.from_frame_summary(_tb[0])
+                    f = DummyFrame.from_frame_summary(_tb0)
             else:
                 f = _tb.tb_frame
             if allLocals is not None:
@@ -1704,10 +1707,11 @@ def iter_traceback(tb=None, enforce_most_recent_call_first=False):
         if is_frame(_tb):
             frame = _tb
         elif is_stack_summary(_tb):
-            if isinstance(_tb[0], ExtendedFrameSummary):
-                frame = _tb[0].tb_frame
+            _tb0 = _tb[0]
+            if isinstance(_tb0, ExtendedFrameSummary):
+                frame = _tb0.tb_frame
             else:
-                frame = DummyFrame.from_frame_summary(_tb[0])
+                frame = DummyFrame.from_frame_summary(_tb0)
         else:
             frame = _tb.tb_frame
         yield frame
