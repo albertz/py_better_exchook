@@ -157,6 +157,7 @@ def test_exception_locals():
             """),
         NameError,
     )
+    exc_stdout = _get_exc_traceback_ending_with_most_recent_frame(exc_stdout)
     assert "locals:" in exc_stdout
     lines = [_remove_ansi_escape_codes(line) for line in exc_stdout.splitlines()]
     lines = [line for line in lines if "a = <local>" in line]
