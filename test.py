@@ -69,7 +69,7 @@ def _import_dummy_mod_by_path(filename):
     """
     dummy_mod_name = "_dummy_mod_name"
     if sys.version_info[0] == 2:
-        # noinspection PyDeprecation
+        # noinspection PyDeprecation,PyUnresolvedReferences
         import imp
 
         # noinspection PyDeprecation
