@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
 import tempfile
-from better_exchook import *
+import better_exchook
 import sys
+import os
 
 PY2 = sys.version_info[0] == 2
 
@@ -27,39 +28,39 @@ def test_is_source_code_missing_open_brackets():
     """
     Test :func:`is_source_code_missing_open_brackets`.
     """
-    assert is_source_code_missing_open_brackets("a") is False
-    assert is_source_code_missing_open_brackets("a)") is True
-    assert is_source_code_missing_open_brackets("fn()") is False
-    assert is_source_code_missing_open_brackets("fn().b()") is False
-    assert is_source_code_missing_open_brackets("fn().b()[0]") is False
-    assert is_source_code_missing_open_brackets("fn({a[0]: 'b'}).b()[0]") is False
-    assert is_source_code_missing_open_brackets("a[0]: 'b'}).b()[0]") is True
+    assert better_exchook.is_source_code_missing_open_brackets("a") is False
+    assert better_exchook.is_source_code_missing_open_brackets("a)") is True
+    assert better_exchook.is_source_code_missing_open_brackets("fn()") is False
+    assert better_exchook.is_source_code_missing_open_brackets("fn().b()") is False
+    assert better_exchook.is_source_code_missing_open_brackets("fn().b()[0]") is False
+    assert better_exchook.is_source_code_missing_open_brackets("fn({a[0]: 'b'}).b()[0]") is False
+    assert better_exchook.is_source_code_missing_open_brackets("a[0]: 'b'}).b()[0]") is True
 
 
 def test_add_indent_lines():
     """
     Test :func:`add_indent_lines`.
     """
-    assert add_indent_lines("foo ", " bar") == "foo  bar"
-    assert add_indent_lines("foo ", " bar\n baz") == "foo  bar\n     baz"
+    assert better_exchook.add_indent_lines("foo ", " bar") == "foo  bar"
+    assert better_exchook.add_indent_lines("foo ", " bar\n baz") == "foo  bar\n     baz"
 
 
 def test_get_same_indent_prefix():
     """
     Test :func:`get_same_indent_prefix`.
     """
-    assert get_same_indent_prefix(["a", "b"]) == ""
-    assert get_same_indent_prefix([" a"]) == " "
-    assert get_same_indent_prefix([" a", "  b"]) == " "
+    assert better_exchook.get_same_indent_prefix(["a", "b"]) == ""
+    assert better_exchook.get_same_indent_prefix([" a"]) == " "
+    assert better_exchook.get_same_indent_prefix([" a", "  b"]) == " "
 
 
 def test_remove_indent_lines():
     """
     Test :func:`remove_indent_lines`.
     """
-    assert remove_indent_lines(" a\n  b") == "a\n b"
-    assert remove_indent_lines("  a\n b") == "a\nb"
-    assert remove_indent_lines("\ta\n\t b") == "a\n b"
+    assert better_exchook.remove_indent_lines(" a\n  b") == "a\n b"
+    assert better_exchook.remove_indent_lines("  a\n b") == "a\nb"
+    assert better_exchook.remove_indent_lines("\ta\n\t b") == "a\n b"
 
 
 def _import_dummy_mod_by_path(filename):
@@ -81,7 +82,7 @@ def _import_dummy_mod_by_path(filename):
         spec.loader.exec_module(mod)  # noqa
 
 
-def _run_code_format_exc(txt, expected_exception, except_hook=better_exchook):
+def _run_code_format_exc(txt, expected_exception, except_hook=better_exchook.better_exchook):
     """
     :param str txt:
     :param type[Exception] expected_exception: exception class
@@ -146,19 +147,19 @@ def test_get_source_code_multi_line():
     dummy_fn = "<_test_multi_line_src>"
     source_code = "(lambda _x: None)("
     source_code += "__name__,\n" + len(source_code) * " " + "42)\n"
-    set_linecache(filename=dummy_fn, source=source_code)
+    better_exchook.set_linecache(filename=dummy_fn, source=source_code)
 
-    src = get_source_code(filename=dummy_fn, lineno=2)
+    src = better_exchook.get_source_code(filename=dummy_fn, lineno=2)
     assert src == source_code
 
-    src = get_source_code(filename=dummy_fn, lineno=1)
+    src = better_exchook.get_source_code(filename=dummy_fn, lineno=1)
     assert src == source_code
 
 
 def test_parse_py_statement_prefixed_str():
     # Our parser just ignores the prefix. But that is fine.
     code = "b'f(1,'"
-    statements = list(parse_py_statement(code))
+    statements = list(better_exchook.parse_py_statement(code))
     assert statements == [("str", "f(1,")]
 
 
@@ -207,7 +208,7 @@ def test_pickle_extracted_stack():
     assert (
         isinstance(stack, traceback.StackSummary) and len(stack) >= 1 and isinstance(stack[0], traceback.FrameSummary)
     )
-    assert type(stack[0]) is ExtendedFrameSummary
+    assert type(stack[0]) is better_exchook.ExtendedFrameSummary
     s = pickle.dumps(stack)
     stack2 = pickle.loads(s)
     assert (
@@ -227,7 +228,7 @@ def test_extracted_stack_format_len():
     # noinspection PyUnresolvedReferences
     f = sys._getframe()
     stack = _StackSummary_extract(traceback.walk_stack(f))
-    stack_strs = format_tb(stack)
+    stack_strs = better_exchook.format_tb(stack)
     for i, s in enumerate(stack_strs):
         print("entry %i:" % i)
         print(s, end="")
@@ -251,7 +252,7 @@ def main():
     """
     Main entry point. Either calls the function, or just calls the demo.
     """
-    install()
+    better_exchook.install()
     arg_parser = ArgumentParser()
     arg_parser.add_argument("command", default=None, help="test, ...", nargs="?")
     args = arg_parser.parse_args()
