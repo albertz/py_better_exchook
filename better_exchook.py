@@ -1124,6 +1124,8 @@ def format_tb(
                 output("(Exclude vars because we are on a GC stack.)")
     if with_vars is None:
         with_vars = True
+    locals_start_str = color("    locals:", color.fg_colors[0])
+
     # noinspection PyBroadException
     try:
         if limit is None:
@@ -1217,12 +1219,13 @@ def format_tb(
                     elif isinstance(f, DummyFrame) and not f.have_vars_available:
                         pass
                     else:
-                        with output.fold_text_ctx(color("    locals:", color.fg_colors[0])):
-                            already_printed_locals = set()  # type: typing.Set[typing.Tuple[str,...]]
+                        with output.fold_text_ctx(locals_start_str):
+                            already_covered_locals = set()  # type: typing.Set[typing.Tuple[str,...]]
+                            num_printed_locals = 0
                             for token_str in grep_full_py_identifiers(parse_py_statement(source_code)):
                                 splitted_token = tuple(token_str.split("."))
                                 for token in [splitted_token[0:i] for i in range(1, len(splitted_token) + 1)]:
-                                    if token in already_printed_locals:
+                                    if token in already_covered_locals:
                                         continue
                                     token_value = None
                                     token_value = _try_set(
@@ -1239,7 +1242,7 @@ def format_tb(
                                         (not cfg_print_not_found and not cfg_print_builtins)
                                         or (not cfg_print_builtins and token[0] in f.f_builtins)
                                     ):
-                                        already_printed_locals.add(token)
+                                        already_covered_locals.add(token)
                                         continue
                                     token_value = _try_set(
                                         token_value,
@@ -1247,16 +1250,22 @@ def format_tb(
                                         lambda: format_py_obj(_resolve_identifier(f.f_builtins, token)),
                                     )
                                     if not token_value and not cfg_print_not_found:
-                                        already_printed_locals.add(token)
+                                        already_covered_locals.add(token)
                                         continue
                                     token_value = token_value or color("<not found>", color.fg_colors[0])
                                     prefix = "      %s " % color(".", color.fg_colors[0], bold=True).join(
                                         token
                                     ) + color("= ", color.fg_colors[0], bold=True)
                                     output(prefix, token_value)
-                                    already_printed_locals.add(token)
-                            if len(already_printed_locals) == 0:
-                                output(color("       no locals", color.fg_colors[0]))
+                                    already_covered_locals.add(token)
+                                    num_printed_locals += 1
+                            if num_printed_locals == 0:
+                                if output.lines and output.lines[-1].endswith(locals_start_str + "\n"):
+                                    output.lines[-1] = output.lines[-1][: -len(locals_start_str) - 1]
+                                elif output.lines and output.lines[-1].endswith("\n"):
+                                    output.lines[-1] = output.lines[-1][:-1] + color(" none", color.fg_colors[0]) + "\n"
+                                else:
+                                    output(color("       no locals", color.fg_colors[0]))
                 else:
                     output(color("    -- code not available --", color.fg_colors[0]))
 
