@@ -25,6 +25,45 @@ def _fold_close():
         print("::endgroup::")
 
 
+def test_parse_py_statement():
+    assert list(better_exchook.parse_py_statement("a")) == [("id", "a")]
+    assert list(better_exchook.parse_py_statement("a.b")) == [("id", "a"), ("op", "."), ("id", "b")]
+    assert list(better_exchook.parse_py_statement("f(a)")) == [("id", "f"), ("op", "("), ("id", "a"), ("op", ")")]
+    assert list(better_exchook.parse_py_statement('"hello"')) == [("str", "hello")]
+    assert list(better_exchook.parse_py_statement('"hello\\n"')) == [("str", "hello\n")]
+
+
+def test_parse_py_statement_f_string():
+    assert list(better_exchook.parse_py_statement('f"hello"')) == [("f-str", "hello")]
+    assert list(better_exchook.parse_py_statement('f"{{hello}}"')) == [("f-str", "{hello}")]
+    assert list(better_exchook.parse_py_statement('f"hello {v} world"')) == [
+        ("f-str", "hello "),
+        ("f-str-expr-open", "{"),
+        ("id", "v"),
+        ("f-str-expr-close", "}"),
+        ("f-str", " world"),
+    ]
+    assert list(better_exchook.parse_py_statement('f"hello {a.b} world"')) == [
+        ("f-str", "hello "),
+        ("f-str-expr-open", "{"),
+        ("id", "a"),
+        ("op", "."),
+        ("id", "b"),
+        ("f-str-expr-close", "}"),
+        ("f-str", " world"),
+    ]
+    assert list(better_exchook.parse_py_statement('f"hello {f(a)} world"')) == [
+        ("f-str", "hello "),
+        ("f-str-expr-open", "{"),
+        ("id", "f"),
+        ("op", "("),
+        ("id", "a"),
+        ("op", ")"),
+        ("f-str-expr-close", "}"),
+        ("f-str", " world"),
+    ]
+
+
 def test_is_source_code_missing_open_brackets():
     """
     Test :func:`is_source_code_missing_open_brackets`.
@@ -174,6 +213,22 @@ def test_exception_no_locals():
     assert "locals" not in exc_stdout_
 
 
+def test_exception_f_string():
+    exc_stdout = _run_code_format_exc(
+        textwrap.dedent("""\
+            d, k = {}, 42
+            print(f"content: {d[k]}")
+            """),
+        KeyError,
+    )
+    exc_stdout = _get_exc_traceback_ending_with_most_recent_frame(exc_stdout)
+    assert "locals:" in exc_stdout
+    lines = [_remove_ansi_escape_codes(line) for line in exc_stdout.splitlines()]
+    lines = [line for line in lines if " = <local> " in line]
+    assert len(lines) == 2, "Expected exactly two local variables in the output, got: %s" % (lines,)
+    assert lines == ["      d = <local> {}", "      k = <local> 42"]
+
+
 def test_syntax_error():
     """
     Test :class:`SyntaxError`.
@@ -224,7 +279,7 @@ def test_parse_py_statement_prefixed_str():
     # Our parser just ignores the prefix. But that is fine.
     code = "b'f(1,'"
     statements = list(better_exchook.parse_py_statement(code))
-    assert statements == [("str", "f(1,")]
+    assert statements == [("b-str", "f(1,")]
 
 
 def test_exception_chaining():

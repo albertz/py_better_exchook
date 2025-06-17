@@ -115,6 +115,10 @@ def parse_py_statement(line):
     """
     state = 0
     cur_token = ""
+    str_prefix = None
+    str_is_f_string = False  # whether we are in an f-string
+    str_quote = None
+    f_str_expr_opening_brackets = 0
     spaces = " \t\n"
     ops = ".,;:+-*/%&!=|(){}[]^<>"
     i = 0
@@ -137,29 +141,36 @@ def parse_py_statement(line):
                 yield "op", c
             elif c == "#":
                 state = 6
-            elif c == '"':
+            elif c in "\"'":
                 state = 1
-            elif c == "'":
-                state = 2
+                str_prefix = None
+                str_is_f_string = False
+                str_quote = c
+                cur_token = ""
             else:
                 cur_token = c
-                state = 3
-        elif state == 1:  # string via "
+                state = 3  # identifier
+        elif state == 1:  # string
             if c == "\\":
-                state = 4
-            elif c == '"':
-                yield "str", cur_token
+                cur_token += _escape_char(line[i : i + 1])
+                i += 1
+            elif c == str_quote:
+                yield "str" if not str_prefix else "%s-str" % str_prefix, cur_token
                 cur_token = ""
                 state = 0
-            else:
-                cur_token += c
-        elif state == 2:  # string via '
-            if c == "\\":
-                state = 5
-            elif c == "'":
-                yield "str", cur_token
-                cur_token = ""
-                state = 0
+            elif str_is_f_string and c == "{":  # f-string
+                if line[i - 1 : i + 1] == "{{":
+                    cur_token += "{"
+                    i += 1
+                else:
+                    yield "str" if not str_prefix else "%s-str" % str_prefix, cur_token
+                    yield "f-str-expr-open", "{"
+                    cur_token = ""
+                    f_str_expr_opening_brackets = 0
+                    state = 4
+            elif str_is_f_string and c == "}" and line[i - 1 : i + 1] == "}}":
+                cur_token += "}"
+                i += 1
             else:
                 cur_token += c
         elif state == 3:  # identifier
@@ -168,20 +179,40 @@ def parse_py_statement(line):
                 cur_token = ""
                 state = 0
                 i -= 1
-            elif c == '"':  # identifier is string prefix
-                cur_token = ""
+            elif c in "\"'":  # identifier is string prefix
                 state = 1
-            elif c == "'":  # identifier is string prefix
+                str_prefix = cur_token
+                str_is_f_string = "f" in str_prefix or "F" in str_prefix
+                str_quote = c
                 cur_token = ""
-                state = 2
             else:
                 cur_token += c
-        elif state == 4:  # escape in "
-            cur_token += _escape_char(c)
-            state = 1
-        elif state == 5:  # escape in '
-            cur_token += _escape_char(c)
-            state = 2
+        elif state == 4:  # f-string expression (like state 0 but simplified)
+            if c in spaces:
+                pass
+            elif c in ops:
+                if f_str_expr_opening_brackets == 0 and c == "}":
+                    yield "f-str-expr-close", "}"
+                    state = 1  # back into the f-string
+                    cur_token = ""
+                else:
+                    yield "op", c
+                    if c in "([{":
+                        f_str_expr_opening_brackets += 1
+                    elif c in ")]}":
+                        if f_str_expr_opening_brackets > 0:
+                            f_str_expr_opening_brackets -= 1
+            else:
+                cur_token = c
+                state = 5  # identifier in f-string expression
+        elif state == 5:  # identifier in f-string expression (like state 3 but simplified)
+            if c in spaces + ops:
+                yield "id", cur_token
+                cur_token = ""
+                state = 4
+                i -= 1
+            else:
+                cur_token += c
         elif state == 6:  # comment
             cur_token += c
     if state == 3:
