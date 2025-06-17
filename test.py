@@ -126,10 +126,27 @@ def _remove_ansi_escape_codes(txt):
     return ansi_escape.sub("", txt)
 
 
+def _get_exc_traceback_ending_with_most_recent_frame(txt):
+    """
+    Get the most recent frame from the traceback text.
+
+    :param str txt: traceback text
+    :return: most recent frame
+    :rtype: str
+    """
+    lines = txt.splitlines(keepends=True)
+    res = []
+    for line in lines:
+        if _remove_ansi_escape_codes(line).startswith("  File "):
+            res.clear()
+        res.append(line)
+    return "".join(res)
+
+
 def test_exception():
-    exc_stdout = _run_code_format_exc("42()", TypeError)
-    assert "TypeError" in exc_stdout
-    assert "not callable" in exc_stdout
+    exc_stdout = _run_code_format_exc("[][42]", IndexError)
+    assert "IndexError" in exc_stdout
+    assert "out of range" in exc_stdout
 
 
 def test_exception_locals():
@@ -148,8 +165,12 @@ def test_exception_locals():
 
 
 def test_exception_no_locals():
-    exc_stdout = _run_code_format_exc("42()", TypeError)
-    assert "locals" not in exc_stdout
+    exc_stdout = _run_code_format_exc("{}[42]", KeyError)
+    exc_stdout_ = _get_exc_traceback_ending_with_most_recent_frame(exc_stdout)
+    assert "KeyError" in exc_stdout_
+    assert "File" in exc_stdout_
+    assert "line:" in exc_stdout_
+    assert "locals" not in exc_stdout_
 
 
 def test_syntax_error():
