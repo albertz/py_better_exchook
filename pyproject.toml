@@ -1,3 +1,10 @@
 [tool.black]
 line-length = 120
 target-version = ["py37"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py37"
+
+[build-system]
+requires = ["setuptools"]
