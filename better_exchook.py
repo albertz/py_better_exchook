@@ -96,6 +96,10 @@ except NameError:  # Python3
 PY3 = sys.version_info[0] >= 3
 
 
+cfg_print_builtins = False
+cfg_print_not_found = False
+
+
 def parse_py_statement(line):
     """
     Parse Python statement into tokens.
@@ -1231,11 +1235,20 @@ def format_tb(
                                         color("<global> ", color.fg_colors[0]),
                                         lambda: format_py_obj(_resolve_identifier(f.f_globals, token)),
                                     )
+                                    if not token_value and (
+                                        (not cfg_print_not_found and not cfg_print_builtins)
+                                        or (not cfg_print_builtins and token[0] in f.f_builtins)
+                                    ):
+                                        already_printed_locals.add(token)
+                                        continue
                                     token_value = _try_set(
                                         token_value,
                                         color("<builtin> ", color.fg_colors[0]),
                                         lambda: format_py_obj(_resolve_identifier(f.f_builtins, token)),
                                     )
+                                    if not token_value and not cfg_print_not_found:
+                                        already_printed_locals.add(token)
+                                        continue
                                     token_value = token_value or color("<not found>", color.fg_colors[0])
                                     prefix = "      %s " % color(".", color.fg_colors[0], bold=True).join(
                                         token
