@@ -3,6 +3,7 @@ import tempfile
 import better_exchook
 import sys
 import os
+import textwrap
 
 PY2 = sys.version_info[0] == 2
 
@@ -173,12 +174,12 @@ def test_exception_chaining():
     if PY2:
         return  # not supported in Python 2
     exc_stdout = _run_code_format_exc(
-        """
-try:
-    {}['a']
-except KeyError as exc:
-    raise ValueError('failed') from exc
-""",
+        textwrap.dedent("""\
+            try:
+                {}['a']
+            except KeyError as exc:
+                raise ValueError('failed') from exc
+            """),
         ValueError,
     )
     assert "The above exception was the direct cause of the following exception" in exc_stdout
