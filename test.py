@@ -111,10 +111,45 @@ def _run_code_format_exc(txt, expected_exception, except_hook=better_exchook.bet
     return exc_stdout.getvalue()
 
 
+def _remove_ansi_escape_codes(txt):
+    """
+    Remove all ANSI escape codes from the text.
+
+    :param str txt:
+    :return: text without escape codes
+    :rtype: str
+    """
+    import re
+
+    # Remove ANSI escape codes.
+    ansi_escape = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+    return ansi_escape.sub("", txt)
+
+
 def test_exception():
     exc_stdout = _run_code_format_exc("42()", TypeError)
     assert "TypeError" in exc_stdout
     assert "not callable" in exc_stdout
+
+
+def test_exception_locals():
+    exc_stdout = _run_code_format_exc(
+        textwrap.dedent("""\
+            a = 42
+            print(a, b)
+            """),
+        NameError,
+    )
+    assert "locals:" in exc_stdout
+    lines = [_remove_ansi_escape_codes(line) for line in exc_stdout.splitlines()]
+    lines = [line for line in lines if "a = <local>" in line]
+    assert len(lines) == 1, "Expected exactly one local variable in the output, got: %s" % (lines,)
+    assert lines[0] == "      a = <local> 42"
+
+
+def test_exception_no_locals():
+    exc_stdout = _run_code_format_exc("42()", TypeError)
+    assert "locals" not in exc_stdout
 
 
 def test_syntax_error():
