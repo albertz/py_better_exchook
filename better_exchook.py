@@ -308,9 +308,6 @@ def debug_shell(user_ns, user_global_ns, traceback=None, execWrapper=None):
         # noinspection PyBroadException
         try:
             # noinspection PyPackageRequirements,PyUnresolvedReferences
-            from IPython.core.debugger import Pdb
-
-            # noinspection PyPackageRequirements,PyUnresolvedReferences
             from IPython.terminal.debugger import TerminalPdb
 
             # noinspection PyPackageRequirements,PyUnresolvedReferences
