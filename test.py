@@ -110,6 +110,12 @@ def _run_code_format_exc(txt, expected_exception, except_hook=better_exchook.bet
     return exc_stdout.getvalue()
 
 
+def test_exception():
+    exc_stdout = _run_code_format_exc("42()", TypeError)
+    assert "TypeError" in exc_stdout
+    assert "not callable" in exc_stdout
+
+
 def test_syntax_error():
     """
     Test :class:`SyntaxError`.
