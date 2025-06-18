@@ -1236,6 +1236,12 @@ def format_tb(
                                     elif token[0] in f.f_globals:
                                         token_base_dict = f.f_globals
                                         token_prefix_str = color("<global> ", color.fg_colors[0])
+                                        if (
+                                            not cfg_print_module_functions
+                                            and len(token) == 1
+                                            and _is_module_function(token_base_dict, token[0], obj_is_dict=True)
+                                        ):
+                                            continue
                                     elif token[0] in f.f_builtins:
                                         if not cfg_print_builtins:
                                             continue
@@ -1271,10 +1277,10 @@ def format_tb(
                                                 continue
                                             if not cfg_print_modules and isinstance(token_obj, types.ModuleType):
                                                 continue
-                                            if not cfg_print_module_functions and _is_module_function(
-                                                token_parent_obj or token_base_dict,
-                                                token[-1],
-                                                obj_is_dict=token_parent_obj is None,
+                                            if (
+                                                not cfg_print_module_functions
+                                                and token_parent_obj is not None
+                                                and _is_module_function(token_parent_obj, token[-1])
                                             ):
                                                 continue
                                             token_repr = add_indent_lines(token_prefix_str, format_py_obj(token_obj))

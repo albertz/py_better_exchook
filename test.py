@@ -372,13 +372,12 @@ def test_pickle_extracted_stack():
 
 
 def test_extracted_stack_format_len():
-    from better_exchook import _StackSummary_extract
     import traceback
 
     # traceback.extract_stack():
     # noinspection PyUnresolvedReferences
     f = sys._getframe()
-    stack = _StackSummary_extract(traceback.walk_stack(f))
+    stack = better_exchook._StackSummary_extract(traceback.walk_stack(f))
     stack_strs = better_exchook.format_tb(stack)
     for i, s in enumerate(stack_strs):
         print("entry %i:" % i)
