@@ -100,6 +100,8 @@ PY3 = sys.version_info[0] >= 3
 cfg_print_builtins = False
 cfg_print_not_found = False
 cfg_print_bound_methods = False
+cfg_print_modules = False
+cfg_print_module_functions = False
 
 
 def parse_py_statement(line):
@@ -1229,21 +1231,21 @@ def format_tb(
                                         continue
                                     already_covered_locals.add(token)
                                     if token[0] in f.f_locals:
+                                        token_base_dict = f.f_locals
                                         token_prefix_str = color("<local> ", color.fg_colors[0])
-                                        token_base_obj = f.f_locals[token[0]]
                                     elif token[0] in f.f_globals:
+                                        token_base_dict = f.f_globals
                                         token_prefix_str = color("<global> ", color.fg_colors[0])
-                                        token_base_obj = f.f_globals[token[0]]
                                     elif token[0] in f.f_builtins:
                                         if not cfg_print_builtins:
                                             continue
+                                        token_base_dict = f.f_builtins
                                         token_prefix_str = color("<builtin> ", color.fg_colors[0])
-                                        token_base_obj = f.f_builtins[token[0]]
                                     else:
                                         if not cfg_print_not_found:
                                             continue
+                                        token_base_dict = None
                                         token_prefix_str = None
-                                        token_base_obj = None
 
                                     prefix = "      %s " % color(".", color.fg_colors[0], bold=True).join(
                                         token
@@ -1254,7 +1256,7 @@ def format_tb(
                                     else:
                                         try:
                                             token_parent_obj = None
-                                            token_obj = token_base_obj
+                                            token_obj = token_base_dict[token[0]]
                                             for attr in token[1:]:
                                                 token_parent_obj = token_obj
                                                 token_obj = getattr(token_obj, attr)
@@ -1265,6 +1267,14 @@ def format_tb(
                                                 not cfg_print_bound_methods
                                                 and token_parent_obj is not None
                                                 and _is_bound_method(token_parent_obj, token[-1])
+                                            ):
+                                                continue
+                                            if not cfg_print_modules and isinstance(token_obj, types.ModuleType):
+                                                continue
+                                            if not cfg_print_module_functions and _is_module_function(
+                                                token_parent_obj or token_base_dict,
+                                                token[-1],
+                                                obj_is_dict=token_parent_obj is None,
                                             ):
                                                 continue
                                             token_repr = add_indent_lines(token_prefix_str, format_py_obj(token_obj))
@@ -1835,6 +1845,16 @@ def _is_bound_method(obj, attr_name):
 
     except AttributeError:
         return False
+
+
+def _is_module_function(obj, attr_name, obj_is_dict=False):
+    if obj_is_dict:
+        func = obj.get(attr_name, None)
+    else:
+        if not isinstance(obj, types.ModuleType):
+            return False
+        func = getattr(obj, attr_name, None)
+    return isinstance(func, types.FunctionType)
 
 
 def install():
