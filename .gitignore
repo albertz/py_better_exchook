@@ -1,6 +1,9 @@
 *.pyc
 .uuid
 
+# custom checkout
+/screenshots.gist
+
 # via setuptools
 /MANIFEST
 /build
