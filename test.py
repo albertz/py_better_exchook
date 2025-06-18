@@ -262,6 +262,24 @@ def test_syntax_error():
     assert ".py" in lines[-1]
 
 
+def test_exception_method_not_printed():
+    better_exchook.cfg_print_bound_methods = False  # anyway the default
+    exc_stdout = _run_code_format_exc(
+        textwrap.dedent("""\
+            import difflib
+            obj = difflib.Differ()
+            print(obj.compare, 1/0)
+            """),
+        ZeroDivisionError,
+    )
+    exc_stdout = _get_exc_traceback_ending_with_most_recent_frame(exc_stdout)
+    assert "locals:" in exc_stdout
+    lines = [_remove_ansi_escape_codes(line) for line in exc_stdout.splitlines()]
+    lines = [line for line in lines if " = <local> " in line]
+    assert len(lines) == 1, "Expected exactly one local variable in the output, got: %s" % (lines,)
+    assert lines[0].strip().startswith("obj = <local> ")
+
+
 def test_get_source_code_multi_line():
     dummy_fn = "<_test_multi_line_src>"
     source_code = "(lambda _x: None)("
