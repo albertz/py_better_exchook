@@ -163,7 +163,7 @@ Output:
 
 Screenshot:
 
-.. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screenshot2.png
+.. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/2cda70f8c5c0478e545640369ebf58d49bf0001c/screenshot2.png
 
 .. _domterm:
 
