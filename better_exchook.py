@@ -1828,22 +1828,25 @@ def _StackSummary_extract(frame_gen, limit=None, lookup_lines=True, capture_loca
 
 
 def _is_bound_method(obj, attr_name):
+    if not PY3:
+        return False  # not properly supported in Python 2
+
     meth = getattr(obj, attr_name, None)
     meth = inspect.unwrap(meth)
 
-    cls = type(obj)
-    func = getattr(cls, attr_name, None)
-
-    if not isinstance(meth, types.MethodType):
-        return False
-
-    try:
+    if isinstance(meth, types.MethodType):
         if meth.__self__ is not obj:
             return False
-
+        cls = type(obj)
+        func = getattr(cls, attr_name, None)
         return meth.__func__ is func
 
-    except AttributeError:
+    elif isinstance(meth, (types.BuiltinMethodType, getattr(types, "MethodWrapperType", types.BuiltinMethodType))):
+        if meth.__self__ is not obj:
+            return False
+        return meth.__name__ == attr_name
+
+    else:
         return False
 
 
