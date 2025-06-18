@@ -12,6 +12,9 @@ Features
 --------
 * Shows locals/globals per frame, but only those used in the current statement.
   It does this by a simple Python code parser.
+  By default, we exclude builtins, undefined names,
+  bound methods (when accessed via the original attribute),
+  modules, top-level module functions.
 * Multi-line Python statements in the stack trace output,
   in case the statement goes over multiple lines.
 * Shows full function qualified name (not just ``co_name``).
@@ -89,71 +92,47 @@ Output:
 
 .. code::
 
-  EXCEPTION
-  Traceback (most recent call last):
-    File "better_exchook.py", line 478, in <module>
-      line: f()
-      locals:
-        f = <local> <function f at 0x107f1de60>
-    File "better_exchook.py", line 477, in f
-      line: x, 42, sys.stdin.__class__, sys.exc_info, y, z
-      locals:
-        x = <global> {'a': 'b', 1: 2}
-        sys = <global> <module 'sys' (built-in)>
-        sys.stdin = <global> <open file '<stdin>', mode 'r' at 0x107d9f0c0>
-        sys.stdin.__class__ = <global> <type 'file'>
-        sys.exc_info = <global> <built-in function exc_info>
-        y = <local> 'foo'
-        z = <not found>
-  NameError: global name 'z' is not defined
+    EXCEPTION
+    Traceback (most recent call last):
+      File "/Users/az/Programmierung/py_better_exchook/demo.py", line 23, in demo
+        line: f()
+        locals:
+          f = <local> <function demo.<locals>.f at 0x10328f740>
+      File "/Users/az/Programmierung/py_better_exchook/demo.py", line 21, in demo.<locals>.f
+        line: x, 42, sys.stdin.__class__, sys.exc_info, y, z  # noqa: F821
+        locals:
+          x = <local> {1: 2, 'a': 'b'}
+          sys.stdin = <global> <_io.TextIOWrapper name='<stdin>' mode='r' encoding='utf-8'>
+          sys.stdin.__class__ = <global> <class '_io.TextIOWrapper'>
+          y = <local> 'foo'
+    NameError: name 'z' is not defined
 
 Python example code:
 
 .. code:: python
 
     try:
-        f = lambda x: None
-        f(x, y)
+        (lambda _x: None)(
+            __name__,
+            42,
+        )  # multiline
     except Exception:
-        better_exchook.better_exchook(*sys.exc_info())
+        better_exchook(*sys.exc_info())
 
 Output:
 
 .. code::
 
-  EXCEPTION
-  Traceback (most recent call last):
-    File "better_exchook.py", line 484, in <module>
-      line: f(x, y)
-      locals:
-        f = <local> <function <lambda> at 0x107f1df50>
-        x = <local> {'a': 'b', 1: 2}
-        y = <not found>
-  NameError: name 'y' is not defined
-
-Python example code:
-
-.. code:: python
-
-    try:
-        (lambda x: None)(__name__,
-                         42)  # multiline
-    except Exception:
-        better_exchook.better_exchook(*sys.exc_info())
-
-Output:
-
-.. code::
-
-  EXCEPTION
-  Traceback (most recent call last):
-    File "better_exchook.py", line 490, in <module>
-      line: (lambda x: None)(__name__,
-                             42)  # multiline
-      locals:
-        x = <local> {'a': 'b', 1: 2}
-        __name__ = <local> '__main__', len = 8
-  TypeError: <lambda>() takes exactly 1 argument (2 given)
+    EXCEPTION
+    Traceback (most recent call last):
+      File "/Users/az/Programmierung/py_better_exchook/demo.py", line 29, in demo
+        line: (lambda _x: None)(
+                  __name__,
+                  42,
+              )  # multiline
+        locals:
+          __name__ = <global> '__main__', len = 8
+    TypeError: demo.<locals>.<lambda>() takes 1 positional argument but 2 were given
 
 Python example code:
 
@@ -162,24 +141,29 @@ Python example code:
     # use this to overwrite the global exception handler
     sys.excepthook = better_exchook.better_exchook
     # and fail
-    finalfail(sys)
+    raise ValueError("final failure: %s" % ((sys, f1, 123),))
 
 Output:
 
 .. code::
 
-  EXCEPTION
-  Traceback (most recent call last):
-    File "better_exchook.py", line 497, in <module>
-      line: finalfail(sys)
-      locals:
-        finalfail = <not found>
-        sys = <local> <module 'sys' (built-in)>
-  NameError: name 'finalfail' is not defined
+    EXCEPTION
+    Traceback (most recent call last):
+      File "/Users/az/Programmierung/py_better_exchook/demo.py", line 106, in <module>
+        line: main()
+        locals:
+          main = <local> <function main at 0x103071c60>
+      File "/Users/az/Programmierung/py_better_exchook/demo.py", line 102, in main
+        line: demo()
+      File "/Users/az/Programmierung/py_better_exchook/demo.py", line 69, in demo
+        line: raise ValueError("final failure: %s" % ((sys, f1, 123),))
+        locals:
+          f1 = <local> <function demo.<locals>.f1 at 0x1030d1da0>
+    ValueError: final failure: (<module 'sys' (built-in)>, <function demo.<locals>.f1 at 0x1030d1da0>, 123)
 
 Screenshot:
 
-.. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screenshot1.png
+.. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screenshot2.png
 
 .. _domterm:
 

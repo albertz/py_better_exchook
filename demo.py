@@ -18,7 +18,7 @@ def demo():
         def f():
             y = "foo"
             # noinspection PyUnresolvedReferences,PyStatementEffect
-            x, 42, sys.stdin.__class__, sys.exc_info, y, z
+            x, 42, sys.stdin.__class__, sys.exc_info, y, z  # noqa: F821
 
         f()
     except Exception:
@@ -26,7 +26,10 @@ def demo():
 
     try:
         # noinspection PyArgumentList
-        (lambda _x: None)(__name__, 42)  # multiline
+        (lambda _x: None)(
+            __name__,
+            42,
+        )  # multiline
     except Exception:
         better_exchook(*sys.exc_info())
 
@@ -62,8 +65,7 @@ def demo():
     # use this to overwrite the global exception handler
     install()
     # and fail
-    # noinspection PyUnresolvedReferences
-    finalfail(sys)
+    raise ValueError("final failure: %s" % ((sys, f1, 123),))
 
 
 def _debug_shell():
