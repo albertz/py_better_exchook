@@ -207,7 +207,9 @@ Similar projects
   Also does not expand statement if it goes over multiple lines.
 * `cknd / stackprinter <https://github.com/cknd/stackprinter>`__.
   Similar as IPython ultratb.
-* `patrys / great-justice <https://github.com/patrys/great-justice>`_
+* `patrys / great-justice <https://github.com/patrys/great-justice>`__
+* `Qix- / better-exceptions <https://github.com/Qix-/better-exceptions>`__
+* `onelivesleft / PrettyErrors <https://github.com/onelivesleft/PrettyErrors>`__
 * See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`__
   related StackOverflow question.
 
