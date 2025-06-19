@@ -194,7 +194,15 @@ Similar projects
 * `patrys / great-justice <https://github.com/patrys/great-justice>`__
 * `Qix- / better-exceptions <https://github.com/Qix-/better-exceptions>`__
 * `onelivesleft / PrettyErrors <https://github.com/onelivesleft/PrettyErrors>`__
-* `friendly-traceback <https://friendly-traceback.github.io/>`__
+* `friendly-traceback <https://friendly-traceback.github.io/>`__.
+  Prints tracebacks with added explanations,
+  intended for Python beginners.
+* `skorokithakis / tbvaccine <https://github.com/skorokithakis/tbvaccine>`__.
+  Pretty-print Python tracebacks.
+  Automatically highlights lines you care about.
+  Can print all locals of a frame.
+* `alexmojaki / stack_data <https://github.com/alexmojaki/stack_data>`__.
+  Extracts data from stack frames.
 * See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`__
   related StackOverflow question.
 
