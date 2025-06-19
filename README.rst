@@ -192,7 +192,8 @@ Similar projects
 * `cknd / stackprinter <https://github.com/cknd/stackprinter>`__.
   Similar as IPython ultratb.
 * `patrys / great-justice <https://github.com/patrys/great-justice>`__
-* `Qix- / better-exceptions <https://github.com/Qix-/better-exceptions>`__
+* `Qix- / better-exceptions <https://github.com/Qix-/better-exceptions>`__.
+  Pretty-print Python exceptions and their tracebacks.
 * `onelivesleft / PrettyErrors <https://github.com/onelivesleft/PrettyErrors>`__
 * `friendly-traceback <https://friendly-traceback.github.io/>`__.
   Prints tracebacks with added explanations,
@@ -200,7 +201,8 @@ Similar projects
 * `skorokithakis / tbvaccine <https://github.com/skorokithakis/tbvaccine>`__.
   Pretty-print Python tracebacks.
   Automatically highlights lines you care about.
-  Can print all locals of a frame.
+  Can print all locals of a frame
+  (but no selection of only relevant ones, no globals).
 * `alexmojaki / stack_data <https://github.com/alexmojaki/stack_data>`__.
   Extracts data from stack frames.
 * See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`__
