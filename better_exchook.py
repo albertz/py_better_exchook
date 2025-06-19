@@ -1089,18 +1089,24 @@ def format_tb(
     clear_frames=True,
 ):
     """
-    :param types.TracebackType|types.FrameType|StackSummary tb: traceback. if None, will use sys._getframe
+    Formats a traceback into a list of strings, each corresponding to one frame.
+
+    Replacement for traceback.format_tb.
+
+    :param types.TracebackType|types.FrameType|StackSummary tb: traceback. If None, will use sys._getframe
     :param int|None limit: limit the traceback to this number of frames. by default, will look at sys.tracebacklimit
     :param dict[str,typing.Any]|None allLocals: if set, will update it with all locals from all frames
     :param dict[str,typing.Any]|None allGlobals: if set, will update it with all globals from all frames
     :param bool withTitle:
     :param bool|None with_color: output with ANSI escape codes for color
-    :param bool with_vars: will print var content which are referenced in the source code line. by default enabled.
+    :param bool with_vars: will print var contents that are referenced in the source code line. by default enabled.
     :param bool clear_frames: whether to call frame.clear() after processing it.
         That will potentially fix some mem leaks regarding locals, so it can be important.
         Also see https://github.com/python/cpython/issues/113939.
-        However, any further access to frame locals will not work (e.g. if you want to use a debugger afterwards).
-    :return: list of strings (line-based)
+        However, any further access to frame locals will not work (e.g., if you want to use a debugger afterward).
+    :return: list of strings, each corresponding to one frame in the traceback.
+        Each string contains the file name, line number, function name, source code line, maybe relevant variables,
+        etc., and a final newline.
     :rtype: list[str]
     """
     color = Color(enable=with_color)
@@ -1333,6 +1339,8 @@ def format_tb(
 
 def print_tb(tb, file=None, **kwargs):
     """
+    Prints the traceback to stderr, or the given file.
+
     Replacement for traceback.print_tb.
 
     :param types.TracebackType|types.FrameType|StackSummary tb:

@@ -7,11 +7,6 @@ i.e. it prints stack traces with extended information.
 It will add some useful information for each frame,
 like printing the relevant variables (relevant = referenced in the code line).
 
-Also see `Python source and comments <https://github.com/albertz/py_better_exchook/blob/master/better_exchook.py>`_ for further details.
-
-This has been used in production for many years (since 2011)
-and should be fairly stable (and has a save fallback mode).
-
 Features
 --------
 * Shows locals/globals per frame, but only those used in the current statement.
@@ -62,18 +57,25 @@ Or:
   import better_exchook
   better_exchook.setup_all()
 
-* **setup_all**
-    - ``install`` + ``replace_traceback_format_tb`` + ``replace_traceback_print_tb``
-* **install**:
+API:
+
+* **setup_all()**
+    - ``install()`` + ``replace_traceback_format_tb()`` + ``replace_traceback_print_tb()``
+* **install()**:
     - ``sys.excepthook = better_exchook``
-* **replace_traceback_format_tb**:
+* **replace_traceback_format_tb()**:
     - ``traceback.format_tb = format_tb``
     - ``traceback.StackSummary.format = format_tb``
     - ``traceback.StackSummary.extract = _StackSummary_extract``
-* **replace_traceback_print_tb**:
+* **replace_traceback_print_tb()**:
     - ``traceback.print_tb = print_tb``
     - ``traceback.print_exception = print_exception``
     - ``traceback.print_exc = print_exc``
+* **better_exchook(exc_type, exc_value, tb, ...)** / **print_exception(exc_type, exc_value, tb, ...)**:
+    - Prints the exception and its traceback with extended information.
+* **format_tb(tb, ...) -> list[str]**:
+    - Formats the traceback with extended information, returning a string for every frame.
+      The string per frame includes a newline at the end.
 
 
 Examples
@@ -174,6 +176,20 @@ Screenshot:
 Screencast with `DomTerm <http://domterm.org>`__ using text folding (`see more <https://stackoverflow.com/a/54019993/133374>`__):
 
 .. image:: https://gist.githubusercontent.com/albertz/a4ce78e5ccd037041638777f10b10327/raw/7ec2bb7079dbd56119d498f20905404cb2d812c0/screencast-domterm.gif
+
+
+Status
+------
+
+This has been used in production for many years (since 2011)
+and should be fairly stable (and has a save fallback mode).
+
+
+Details
+-------
+
+Also see `Python source and comments <https://github.com/albertz/py_better_exchook/blob/master/better_exchook.py>`_ for further details.
+
 
 
 Similar projects
