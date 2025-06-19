@@ -194,6 +194,7 @@ Similar projects
 * `patrys / great-justice <https://github.com/patrys/great-justice>`__
 * `Qix- / better-exceptions <https://github.com/Qix-/better-exceptions>`__
 * `onelivesleft / PrettyErrors <https://github.com/onelivesleft/PrettyErrors>`__
+* `friendly-traceback <https://friendly-traceback.github.io/>`__
 * See `this <http://stackoverflow.com/questions/1308607/python-assert-improved-introspection-of-failure>`__
   related StackOverflow question.
 
