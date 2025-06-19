@@ -1,6 +1,6 @@
 import sys
 from argparse import ArgumentParser
-from better_exchook import better_exchook, install, debug_shell
+import better_exchook
 
 
 # noinspection PyMissingOrEmptyDocstring,PyBroadException
@@ -22,7 +22,7 @@ def demo():
 
         f()
     except Exception:
-        better_exchook(*sys.exc_info())
+        sys.excepthook(*sys.exc_info())
 
     try:
         # noinspection PyArgumentList
@@ -31,7 +31,7 @@ def demo():
             42,
         )  # multiline
     except Exception:
-        better_exchook(*sys.exc_info())
+        sys.excepthook(*sys.exc_info())
 
     try:
 
@@ -42,7 +42,7 @@ def demo():
         obj = Obj()
         assert not obj
     except Exception:
-        better_exchook(*sys.exc_info())
+        sys.excepthook(*sys.exc_info())
 
     # noinspection PyMissingOrEmptyDocstring
     def f1(a):
@@ -60,16 +60,14 @@ def demo():
     try:
         f1(13)
     except Exception:
-        better_exchook(*sys.exc_info())
+        sys.excepthook(*sys.exc_info())
 
-    # use this to overwrite the global exception handler
-    install()
-    # and fail
+    # final fail
     raise ValueError("final failure: %s" % ((sys, f1, 123),))
 
 
 def _debug_shell():
-    debug_shell(locals(), globals())
+    better_exchook.debug_shell(locals(), globals())
 
 
 def _debug_shell_exception():
@@ -77,13 +75,17 @@ def _debug_shell_exception():
     try:
         raise Exception("demo exception")
     except Exception:
-        better_exchook(*sys.exc_info(), debugshell=True)
+        better_exchook.better_exchook(*sys.exc_info(), debugshell=True)
 
 
 def main():
     arg_parser = ArgumentParser()
     arg_parser.add_argument("command", help="demo, debug_shell, ...", nargs="?")
+    arg_parser.add_argument("--excepthook-setup", help="excepthook setup", default="better_exchook.install()")
     args = arg_parser.parse_args()
+
+    exec(args.excepthook_setup, globals(), locals())
+
     if args.command:
         if "_%s" % args.command in globals():
             func_name = "_%s" % args.command
