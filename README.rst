@@ -6,7 +6,11 @@ A nicer drop-in-replacement for Python ``sys.excepthook``,
 i.e. it prints stack traces with extended information.
 It will add some useful information for each frame,
 like printing the relevant variables (relevant = referenced in the code line).
+
 Also see `Python source and comments <https://github.com/albertz/py_better_exchook/blob/master/better_exchook.py>`_ for further details.
+
+This has been used in production for many years (since 2011)
+and should be fairly stable (and has a save fallback mode).
 
 Features
 --------
