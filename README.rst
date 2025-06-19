@@ -214,6 +214,12 @@ Similar projects
 * `patrys / great-justice <https://github.com/patrys/great-justice>`__
 * `Qix- / better-exceptions <https://github.com/Qix-/better-exceptions>`__.
   Pretty-print Python exceptions and their tracebacks.
+  Adds content of relevant variables from the current source line,
+  but only top-level names, not attributes of objects
+  (for ``a.b``, only print ``a``).
+  Also does not support multi-line statements,
+  and no full function qualified names.
+  Also currently (2025-06) broken for Python 3.13.
 * `onelivesleft / PrettyErrors <https://github.com/onelivesleft/PrettyErrors>`__
 * `friendly-traceback <https://friendly-traceback.github.io/>`__.
   Prints tracebacks with added explanations,
