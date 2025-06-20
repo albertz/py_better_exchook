@@ -1059,7 +1059,12 @@ class _OutputLinesCollector:
         :param typing.Any obj:
         :rtype: str
         """
-        s = repr(obj)
+        if isinstance(obj, types.FunctionType) and hasattr(obj, "__module__") and hasattr(obj, "__qualname__"):
+            s = "<function %s.%s>" % (obj.__module__, obj.__qualname__)
+        elif isinstance(obj, type) and hasattr(obj, "__module__") and hasattr(obj, "__qualname__"):
+            s = "<class %s.%s>" % (obj.__module__, obj.__qualname__)
+        else:
+            s = repr(obj)
         limit = output_limit()
         if len(s) > limit:
             if self.dom_term:
