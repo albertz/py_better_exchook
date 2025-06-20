@@ -294,6 +294,20 @@ def test_exception_mod_func_not_printed():
     assert "locals:" not in exc_stdout
 
 
+def test_exception_mod_class_not_printed():
+    better_exchook.cfg_print_modules = False  # anyway the default
+    better_exchook.cfg_print_module_classes = False  # anyway the default
+    exc_stdout = _run_code_format_exc(
+        textwrap.dedent("""\
+            import difflib
+            print(difflib.Differ(), 1/0)
+            """),
+        ZeroDivisionError,
+    )
+    exc_stdout = _get_exc_traceback_ending_with_most_recent_frame(exc_stdout)
+    assert "locals:" not in exc_stdout
+
+
 def test_get_source_code_multi_line():
     dummy_fn = "<_test_multi_line_src>"
     source_code = "(lambda _x: None)("
