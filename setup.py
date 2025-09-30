@@ -126,7 +126,10 @@ setup(
     author="Albert Zeyer",
     author_email="albzey@gmail.com",
     url="https://github.com/albertz/py_better_exchook",
-    license="2-clause BSD license",
+    # https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license
+    # https://spdx.org/licenses/
+    license="BSD-2-Clause",
+    license_files=["License.txt"],
     long_description=open("README.rst").read(),
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -134,7 +137,6 @@ setup(
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: BSD License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
