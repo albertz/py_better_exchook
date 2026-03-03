@@ -391,6 +391,7 @@ def debug_shell(user_ns, user_global_ns, traceback=None, execWrapper=None):
                 if "__name__" not in user_ns:
                     user_ns = user_ns.copy()
                     user_ns["__name__"] = "_DummyUserNsMod"
+                IPython.terminal.embed.InteractiveShellEmbed.clear_instance()
                 ipshell = IPython.terminal.embed.InteractiveShellEmbed.instance(user_ns=user_ns, user_module=module)
             except Exception:
                 print("IPython not available:")
