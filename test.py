@@ -146,7 +146,7 @@ def _run_code_format_exc(txt, expected_exception, except_hook=better_exchook.bet
             print("-" * 40)
             raise Exception("Got unexpected exception: %s: %s" % (type(exc).__name__, exc))
         else:
-            raise Exception("We expected to get a %s..." % expected_exception.__name__)
+            raise Exception("We expected to get a %s but got no exception" % expected_exception.__name__)
     return exc_stdout.getvalue()
 
 
