@@ -63,9 +63,11 @@ def demo():
         sys.excepthook(*sys.exc_info())
 
     try:
-        print("""
+        print(
+            """
             multiline
-            """.what)
+            """.what
+        )
         print("Will not get here")
     except Exception:
         sys.excepthook(*sys.exc_info())

@@ -239,7 +239,7 @@ def test_exception_f_string():
 
 
 def test_exception_triple_quoted_string():
-    s = "\"" * 3 + "\n    hello\n    " + "\"" * 3
+    s = '"' * 3 + "\n    hello\n    " + '"' * 3
     exc_stdout = _run_code_format_exc(f"print({s}.what)\nprint('nono')\n", AttributeError)
     exc_stdout = _get_exc_traceback_ending_with_most_recent_frame(exc_stdout)
     # Note: The parsing here is unreliable, so currently, we just ignore it.
