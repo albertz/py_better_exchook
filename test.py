@@ -229,6 +229,15 @@ def test_exception_f_string():
     assert lines == ["      d = <local> {}", "      k = <local> 42"]
 
 
+def test_exception_triple_quoted_string():
+    s = "\"" * 3 + "\n    hello\n    " + "\"" * 3
+    exc_stdout = _run_code_format_exc(f"print({s}.what)\nprint('nono')\n", AttributeError)
+    exc_stdout = _get_exc_traceback_ending_with_most_recent_frame(exc_stdout)
+    assert "hello" in exc_stdout, f"Expected 'hello' in the output, got:\n{exc_stdout}"
+    assert "what" in exc_stdout, f"Expected 'hello' in the output, got:\n{exc_stdout}"
+    assert "nono" not in exc_stdout, f"Expected 'nono' not in the output, got:\n{exc_stdout}"
+
+
 def test_syntax_error():
     """
     Test :class:`SyntaxError`.
