@@ -150,7 +150,11 @@ def parse_py_statement(line):
                 state = 1
                 str_prefix = None
                 str_is_f_string = False
-                str_quote = c
+                if line[i - 1 : i + 2] == c * 3:
+                    str_quote = c * 3
+                    i += 2
+                else:
+                    str_quote = c
                 cur_token = ""
             else:
                 cur_token = c
@@ -159,7 +163,8 @@ def parse_py_statement(line):
             if c == "\\":
                 cur_token += _escape_char(line[i : i + 1])
                 i += 1
-            elif c == str_quote:
+            elif c == str_quote[0] and line[i - 1 : i - 1 + len(str_quote)] == str_quote:
+                i += len(str_quote) - 1
                 yield "str" if not str_prefix else "%s-str" % str_prefix, cur_token
                 cur_token = ""
                 state = 0
@@ -188,7 +193,11 @@ def parse_py_statement(line):
                 state = 1
                 str_prefix = cur_token
                 str_is_f_string = "f" in str_prefix or "F" in str_prefix
-                str_quote = c
+                if line[i - 1 : i + 2] == c * 3:
+                    str_quote = c * 3
+                    i += 2
+                else:
+                    str_quote = c
                 cur_token = ""
             else:
                 cur_token += c
@@ -219,11 +228,20 @@ def parse_py_statement(line):
             else:
                 cur_token += c
         elif state == 6:  # comment
-            cur_token += c
+            if c == "\n":
+                yield "comment", cur_token
+                cur_token = ""
+                state = 0
+            else:
+                cur_token += c
     if state == 3:
         yield "id", cur_token
+        state = 0
     elif state == 6:
         yield "comment", cur_token
+        state = 0
+    if state != 0:
+        yield "incomplete", state
 
 
 def parse_py_statements(source_code):
@@ -232,9 +250,7 @@ def parse_py_statements(source_code):
     :return: via :func:`parse_py_statement`
     :rtype: typing.Iterator[typing.Tuple[str,str]]
     """
-    for line in source_code.splitlines():
-        for t in parse_py_statement(line):
-            yield t
+    return parse_py_statement(source_code)
 
 
 def grep_full_py_identifiers(tokens):
@@ -466,6 +482,8 @@ def is_source_code_missing_brackets(source_code, prioritize_missing_open=False):
     counters = [0] * len(open_brackets)
     missing_open = False
     for t_type, t_content in list(parse_py_statements(source_code)):
+        if t_type == "incomplete":
+            return 0  # stop expanding
         if t_type != "op":
             continue  # we are from now on only interested in ops (including brackets)
         if t_content in open_brackets:

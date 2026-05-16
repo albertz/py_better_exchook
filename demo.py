@@ -62,6 +62,14 @@ def demo():
     except Exception:
         sys.excepthook(*sys.exc_info())
 
+    try:
+        print("""
+            multiline
+            """.what)
+        print("Will not get here")
+    except Exception:
+        sys.excepthook(*sys.exc_info())
+
     # final fail
     raise ValueError("final failure: %s" % ((sys, f1, 123),))
 
