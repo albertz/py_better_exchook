@@ -59,6 +59,8 @@ import keyword
 import inspect
 import contextlib
 import types
+import linecache
+import traceback
 from weakref import WeakKeyDictionary
 
 try:
@@ -288,8 +290,6 @@ def set_linecache(filename, source):
     :param str source:
     :return: nothing
     """
-    import linecache
-
     # noinspection PyTypeChecker
     linecache.cache[filename] = None, None, [line + "\n" for line in source.splitlines()], filename
 
@@ -1384,7 +1384,6 @@ def format_tb(
 
     except Exception:
         output(color("ERROR: cannot get more detailed exception info because:", color.fg_colors[1], bold=True))
-        import traceback
 
         for line in traceback.format_exc().split("\n"):
             output("   " + line)
@@ -1957,8 +1956,6 @@ def replace_traceback_format_tb():
     Note that this kind of monkey patching might not be safe under all circumstances
     and is not officially supported by Python.
     """
-    import traceback
-
     traceback.format_tb = format_tb
     if hasattr(traceback, "StackSummary"):
         traceback.StackSummary.format = format_tb
@@ -1976,8 +1973,6 @@ def replace_traceback_print_tb():
     Note that this kind of monkey patching might not be safe under all circumstances
     and is not officially supported by Python.
     """
-    import traceback
-
     traceback.print_tb = print_tb
     traceback.print_exception = print_exception
     traceback.print_exc = print_exc
