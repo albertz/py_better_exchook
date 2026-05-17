@@ -61,6 +61,7 @@ import contextlib
 import types
 import linecache
 import traceback
+import itertools
 from weakref import WeakKeyDictionary
 
 try:
@@ -519,17 +520,19 @@ def is_source_code_missing_open_brackets(source_code):
     return is_source_code_missing_brackets(source_code, prioritize_missing_open=True) < 0
 
 
-def get_source_code(filename, lineno, module_globals=None):
+def get_source_code(filename, lineno, module_globals=None, end_lineno=None):
     """
     :param str filename:
-    :param int lineno:
+    :param int lineno: 1-indexed
     :param dict[str,typing.Any]|None module_globals:
+    :param int|None end_lineno: 1-indexed. inclusive
     :return: source code of that line (including newline)
     :rtype: str
     """
-    import linecache
-
     linecache.checkcache(filename)
+    if end_lineno is not None:
+        lines = linecache.getlines(filename, module_globals)
+        return "".join(lines[lineno - 1 : end_lineno])  # 1-indexed
     source_code = linecache.getline(filename, lineno, module_globals)
     # In case of a multi-line statement, lineno is usually the last line.
     # We are checking for missing open brackets and add earlier code lines.
@@ -1222,24 +1225,31 @@ def format_tb(
         while _tb is not None and (limit is None or n < limit):
             if isframe(_tb):
                 f = _tb
+                lasti = f.f_lasti
+                lineno, end_lineno, colno, end_colno = _get_code_position(f.f_code, lasti)
             elif is_stack_summary(_tb):
                 _tb0 = _tb[0]
                 if isinstance(_tb0, ExtendedFrameSummary):
                     f = _tb0.tb_frame
                 else:
                     f = DummyFrame.from_frame_summary(_tb0)
+                lineno = _tb0.lineno
+                end_lineno = getattr(_tb0, "end_lineno", None)
             else:
                 f = _tb.tb_frame
+                lasti = _tb.tb_lasti
+                lineno, end_lineno, colno, end_colno = _get_code_position(f.f_code, lasti)
             if allLocals is not None:
                 allLocals.update(f.f_locals)
             if allGlobals is not None:
                 allGlobals.update(f.f_globals)
-            if hasattr(_tb, "tb_lineno"):
-                lineno = _tb.tb_lineno
-            elif is_stack_summary(_tb):
-                lineno = _tb[0].lineno
-            else:
-                lineno = f.f_lineno
+            if lineno is None:
+                if hasattr(_tb, "tb_lineno"):
+                    lineno = _tb.tb_lineno
+                elif is_stack_summary(_tb):
+                    lineno = _tb[0].lineno
+                else:
+                    lineno = f.f_lineno
             co = f.f_code
             filename = co.co_filename
             if not os.path.isfile(filename):
@@ -1261,7 +1271,7 @@ def format_tb(
                 ]
             )
             with output.fold_text_ctx(file_descr, merge_into_prev=False):
-                source_code = get_source_code(filename, lineno, f.f_globals)
+                source_code = get_source_code(filename, lineno, f.f_globals, end_lineno=end_lineno)
                 if source_code:
                     source_code = remove_indent_lines(replace_tab_indents(source_code)).rstrip()
                     output("    line: ", color.py_syntax_highlight(source_code), color=color.fg_colors[0])
@@ -1844,9 +1854,28 @@ class DummyFrame:
         :param FrameSummary f:
         :rtype: DummyFrame
         """
-        return cls(filename=f.filename, lineno=f.lineno, name=f.name, f_locals=f.locals)
+        return cls(
+            filename=f.filename,
+            lineno=f.lineno,
+            name=f.name,
+            f_locals=f.locals,
+            end_lineno=getattr(f, "end_lineno", None),
+            colno=getattr(f, "colno", None),
+            end_colno=getattr(f, "end_colno", None),
+        )
 
-    def __init__(self, filename, lineno, name, f_locals=None, f_globals=None, f_builtins=None):
+    def __init__(
+        self,
+        filename,
+        lineno,
+        name,
+        f_locals=None,
+        f_globals=None,
+        f_builtins=None,
+        end_lineno=None,
+        colno=None,
+        end_colno=None,
+    ):
         self.lineno = lineno
         self.tb_lineno = lineno
         self.f_lineno = lineno
@@ -1855,6 +1884,9 @@ class DummyFrame:
         self.co_filename = filename
         self.name = name
         self.co_name = name
+        self.end_lineno = end_lineno
+        self.colno = colno
+        self.end_colno = end_colno
         self.f_locals = f_locals or {}
         self.f_globals = f_globals or {}
         self.f_builtins = f_builtins or {}
@@ -1936,6 +1968,24 @@ def _is_module_class(obj, attr_name, obj_is_dict=False):
             return False
         cls = getattr(obj, attr_name, None)
     return isinstance(cls, type)
+
+
+def _get_code_position(code, instruction_byte_offset):
+    """
+    :param code:
+    :param instruction_byte_offset:
+    :return: (lineno, end_lineno, colno, end_colno)
+    """
+    # code from Python >=3.11
+    if instruction_byte_offset is None or instruction_byte_offset < 0:
+        return None, None, None, None
+    if not hasattr(code, "co_positions"):  # Python <3.11
+        return None, None, None, None
+    positions_gen = code.co_positions()
+    # instruction_byte_offset (tb_lasti) is the byte offset,
+    # and each instruction is exactly 2 bytes (wordcode),
+    # so need to divide by 2 to get the actual instruction index.
+    return next(itertools.islice(positions_gen, instruction_byte_offset // 2, None))
 
 
 def install():
