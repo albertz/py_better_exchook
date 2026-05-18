@@ -83,6 +83,7 @@ py_keywords = set(keyword.kwlist) | set(["None", "True", "False"])
 
 _cur_pwd = os.getcwd()
 _threading_main_thread = threading.main_thread() if hasattr(threading, "main_thread") else None
+_format_tb_active = threading.local()
 
 try:
     # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
@@ -1153,6 +1154,10 @@ def format_tb(
         etc., and a final newline.
     :rtype: list[str]
     """
+    if getattr(_format_tb_active, "active", False):
+        # Recursive call (e.g. repr() of a local variable triggered another traceback).
+        # Return a placeholder to avoid infinite recursion.
+        return ["  <traceback formatting suppressed: recursive format_tb call>\n"]
     if colorize is not None and with_color is None:
         with_color = colorize
     color = Color(enable=with_color)
@@ -1216,6 +1221,7 @@ def format_tb(
 
     # noinspection PyBroadException
     try:
+        _format_tb_active.active = True
         if limit is None:
             if hasattr(sys, "tracebacklimit"):
                 limit = sys.tracebacklimit
@@ -1397,6 +1403,8 @@ def format_tb(
 
         for line in traceback.format_exc().split("\n"):
             output("   " + line)
+    finally:
+        _format_tb_active.active = False
 
     return output.lines
 
