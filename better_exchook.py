@@ -825,12 +825,8 @@ class Color:
                 pass
         if state == 3:
             finish_identifier()
-        out = ""
-        i = 0
-        while i < len(s):
-            j = min([k for k in color_args.keys() if k > i])
-            out += self.color(s[i:j], **color_args[i])
-            i = j
+        keys = sorted(color_args)
+        out = "".join(self.color(s[i:j], **color_args[i]) for i, j in zip(keys, keys[1:]))
         return out
 
 
