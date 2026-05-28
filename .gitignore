@@ -1,5 +1,7 @@
 *.pyc
+__pycache__
 .uuid
+.history*
 
 # custom checkout
 /screenshots.gist
