@@ -900,7 +900,7 @@ class DomTerm:
         """
         :param str prefix: always visible
         :param str postfix: always visible, right after.
-        :param io.TextIOBase|io.StringIO hidden_stream: sys.stdout by default.
+        :param io.TextIOBase|io.StringIO|None hidden_stream: sys.stdout by default.
             If this is sys.stdout, it will replace that stream,
             and collect the data during the context (in the `with` block).
         """
@@ -1133,7 +1133,7 @@ def format_tb(
 
     Replacement for traceback.format_tb.
 
-    :param types.TracebackType|types.FrameType|StackSummary tb: traceback. If None, will use sys._getframe
+    :param types.TracebackType|types.FrameType|StackSummary|None tb: traceback. If None, will use sys._getframe
     :param int|None limit: limit the traceback to this number of frames. by default, will look at sys.tracebacklimit
     :param dict[str,typing.Any]|None allLocals: if set, will update it with all locals from all frames
     :param dict[str,typing.Any]|None allGlobals: if set, will update it with all globals from all frames
